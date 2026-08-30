@@ -1,0 +1,142 @@
+<view class="container">
+  <!-- 用户信息 -->
+  <view class="card user-card">
+    <view class="user-info">
+      <button class="avatar-btn" open-type="chooseAvatar" bindchooseavatar="onChooseAvatar">
+        <image class="user-avatar" src="{{userInfo.avatarUrl || '/images/default-avatar.png'}}" mode="aspectFill" />
+      </button>
+      <view class="user-detail">
+        <view class="user-name">{{userInfo.nickName || '用户'}}</view>
+        <view class="user-role">{{userRole === 'main' ? '主角' : '伴侣'}}</view>
+      </view>
+    </view>
+
+    <!-- 主角：显示积分和打卡统计 -->
+    <view class="user-stats" wx:if="{{userRole !== 'partner'}}">
+      <view class="user-stat">
+        <view class="user-stat-value">{{totalPoints}}</view>
+        <view class="user-stat-label">积分</view>
+      </view>
+      <view class="user-stat-divider"></view>
+      <view class="user-stat">
+        <view class="user-stat-value">{{totalCheckins}}</view>
+        <view class="user-stat-label">总打卡</view>
+      </view>
+      <view class="user-stat-divider"></view>
+      <view class="user-stat">
+        <view class="user-stat-value">{{streakDays}}</view>
+        <view class="user-stat-label">连续天数</view>
+      </view>
+    </view>
+
+    <!-- 伴侣：显示绑定关系 -->
+    <view class="partner-relation" wx:if="{{userRole === 'partner' && partnerName}}">
+      <view class="relation-icon">💕</view>
+      <view class="relation-text">已绑定：{{partnerName}}</view>
+    </view>
+  </view>
+
+  <!-- 绑定码（仅主角） -->
+  <view class="card bind-code-card" wx:if="{{userRole !== 'partner' && bindCode}}">
+    <view class="bind-code-title">伴侣绑定码</view>
+    <view class="bind-code-value">{{bindCode}}</view>
+    <view class="bind-code-tip">让伴侣在登录时输入此绑定码</view>
+  </view>
+
+  <!-- 奖励区域（仅主角+伴侣） -->
+  <view class="card reward-card" wx:if="{{userRole !== 'partner'}}">
+    <view class="reward-header">
+      <view class="reward-title">🎁 奖励中心</view>
+      <view class="reward-points">当前积分: {{totalPoints}}</view>
+    </view>
+
+    <!-- 奖励列表 -->
+    <view class="reward-list" wx:if="{{rewards.length > 0}}">
+      <view class="reward-item {{item.canExchange ? 'can-exchange' : ''}}" wx:for="{{rewards}}" wx:key="_id">
+        <view class="reward-item-info">
+          <view class="reward-item-name">{{item.name}}</view>
+          <view class="reward-item-points">{{item.points}} 积分</view>
+        </view>
+        <button
+          class="reward-btn {{item.canExchange ? '' : 'btn-disabled'}}"
+          bindtap="exchangeReward"
+          data-id="{{item._id}}"
+        >
+          {{item.exchanged ? '已兑换' : '兑换'}}
+        </button>
+      </view>
+    </view>
+    <view class="empty-state" wx:else>
+      <text>暂无奖励，让伴侣设置奖励</text>
+    </view>
+  </view>
+
+  <!-- 伴侣：奖励设置入口 -->
+  <view class="card reward-card" wx:if="{{userRole === 'partner'}}">
+    <view class="reward-header">
+      <view class="reward-title">🎁 奖励管理</view>
+    </view>
+    <view class="reward-action" bindtap="goRewardSettings">
+      <text>设置奖励列表</text>
+      <text class="arrow">›</text>
+    </view>
+    <view class="reward-list" wx:if="{{rewards.length > 0}}">
+      <view class="reward-item" wx:for="{{rewards}}" wx:key="_id">
+        <view class="reward-item-info">
+          <view class="reward-item-name">{{item.name}}</view>
+          <view class="reward-item-points">{{item.points}} 积分</view>
+        </view>
+        <view class="reward-status">
+          {{item.exchanged ? '待兑现' : '可兑换'}}
+        </view>
+      </view>
+    </view>
+    <view class="empty-state" wx:else>
+      <text>还没有设置奖励</text>
+    </view>
+  </view>
+
+  <!-- 功能菜单 -->
+  <view class="menu-list">
+    <view class="menu-item" bindtap="goRemind">
+      <view class="menu-icon">⏰</view>
+      <view class="menu-text">提醒设置</view>
+      <view class="menu-arrow">›</view>
+    </view>
+    <view class="menu-item" bindtap="editPushplusToken">
+      <view class="menu-icon">🔔</view>
+      <view class="menu-text">消息推送</view>
+      <view class="menu-arrow">{{pushplusToken ? '✓' : '›'}}</view>
+    </view>
+    <view class="menu-item" bindtap="showAbout">
+      <view class="menu-icon">ℹ️</view>
+      <view class="menu-text">关于 Xlover</view>
+      <view class="menu-arrow">›</view>
+    </view>
+    <!-- 解绑（伴侣） -->
+    <view class="menu-item menu-danger" bindtap="unbindPartner" wx:if="{{userRole === 'partner'}}">
+      <view class="menu-icon">🔒</view>
+      <view class="menu-text">解除绑定</view>
+      <view class="menu-arrow">›</view>
+    </view>
+  </view>
+
+  <!-- 头像昵称设置弹窗 -->
+  <view class="modal" wx:if="{{showUserInfoModal}}">
+    <view class="modal-mask" bindtap="closeUserInfoModal"></view>
+    <view class="modal-content userinfo-modal">
+      <view class="userinfo-modal-title">更新资料</view>
+      <view class="userinfo-modal-desc">点击头像可更换，昵称可选</view>
+      <view class="avatar-picker-area" style="margin: 32rpx 0;">
+        <button class="avatar-picker-btn" open-type="chooseAvatar" bindchooseavatar="onChooseAvatar">
+          <image class="avatar-preview" src="{{tempAvatarUrl || userInfo.avatarUrl || '/images/default-avatar.png'}}" mode="aspectFill" />
+          <view class="avatar-edit-icon">📷</view>
+        </button>
+      </view>
+      <view class="form-group">
+        <input type="nickname" class="nickname-input" placeholder="请输入昵称" value="{{tempNickName}}" bindinput="onInputNickName" bindblur="onNickNameBlur" />
+      </view>
+      <button class="btn btn-primary" bindtap="saveUserInfo">保存</button>
+    </view>
+  </view>
+</view>

@@ -1,0 +1,256 @@
+.calories-overview {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 40rpx;
+}
+
+.calories-circle {
+  width: 200rpx;
+  height: 200rpx;
+  border-radius: 50%;
+  border: 12rpx solid var(--primary-light);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 20rpx;
+}
+
+.calories-number {
+  font-size: 48rpx;
+  font-weight: 700;
+  color: var(--primary);
+}
+
+.calories-unit {
+  font-size: 22rpx;
+  color: var(--text-light);
+}
+
+.calories-status {
+  font-size: 26rpx;
+  color: var(--secondary);
+  font-weight: 500;
+}
+
+.calories-status.over {
+  color: var(--danger);
+}
+
+.search-bar {
+  display: flex;
+  align-items: center;
+  background: var(--bg-card);
+  border-radius: var(--radius);
+  padding: 16rpx 24rpx;
+  margin-bottom: 24rpx;
+  box-shadow: var(--shadow);
+}
+
+.search-bar input {
+  flex: 1;
+  font-size: 28rpx;
+}
+
+.search-icon {
+  font-size: 32rpx;
+  margin-left: 16rpx;
+}
+
+.food-list {
+  display: flex;
+  flex-direction: column;
+  gap: 16rpx;
+}
+
+.food-item {
+  display: flex;
+  align-items: center;
+  padding: 20rpx;
+  background: var(--bg-page);
+  border-radius: var(--radius);
+}
+
+.food-info {
+  flex: 1;
+}
+
+.food-name {
+  font-size: 28rpx;
+  color: var(--text-primary);
+}
+
+.food-calories {
+  font-size: 22rpx;
+  color: var(--text-light);
+  margin-top: 4rpx;
+}
+
+.food-add {
+  width: 48rpx;
+  height: 48rpx;
+  border-radius: 50%;
+  background: var(--primary);
+  color: #fff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 32rpx;
+}
+
+.form-group {
+  margin-bottom: 24rpx;
+}
+
+.form-group:last-child {
+  margin-bottom: 0;
+}
+
+.form-label {
+  display: block;
+  font-size: 26rpx;
+  color: var(--text-secondary);
+  margin-bottom: 12rpx;
+}
+
+.form-group input,
+.picker-value {
+  background: var(--bg-page);
+  border-radius: var(--radius);
+  padding: 20rpx 24rpx;
+  font-size: 28rpx;
+}
+
+.picker-value {
+  color: var(--text-primary);
+}
+
+.food-log-list {
+  display: flex;
+  flex-direction: column;
+  gap: 16rpx;
+}
+
+.food-log-item {
+  display: flex;
+  align-items: center;
+  padding: 20rpx;
+  background: var(--bg-page);
+  border-radius: var(--radius);
+}
+
+.food-log-info {
+  flex: 1;
+}
+
+.food-log-name {
+  font-size: 28rpx;
+  color: var(--text-primary);
+}
+
+.food-log-detail {
+  font-size: 22rpx;
+  color: var(--text-light);
+  margin-top: 4rpx;
+}
+
+.food-log-calories {
+  font-size: 28rpx;
+  color: var(--primary);
+  font-weight: 600;
+  margin-right: 20rpx;
+}
+
+.food-log-delete {
+  width: 40rpx;
+  height: 40rpx;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--danger);
+  font-size: 24rpx;
+}
+
+.modal {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 100;
+  display: flex;
+  align-items: flex-end;
+}
+
+.modal-mask {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.5);
+}
+
+.modal-content {
+  position: relative;
+  background: var(--bg-card);
+  border-radius: var(--radius-lg) var(--radius-lg) 0 0;
+  padding: 40rpx;
+  width: 100%;
+  animation: slideUp 0.3s ease;
+}
+
+@keyframes slideUp {
+  from {
+    transform: translateY(100%);
+  }
+  to {
+    transform: translateY(0);
+  }
+}
+
+.modal-title {
+  font-size: 32rpx;
+  font-weight: 600;
+  text-align: center;
+  margin-bottom: 8rpx;
+}
+
+.modal-info {
+  text-align: center;
+  font-size: 24rpx;
+  color: var(--text-light);
+  margin-bottom: 32rpx;
+}
+
+.modal-actions {
+  display: flex;
+  gap: 20rpx;
+  margin-top: 32rpx;
+}
+
+.modal-actions .btn {
+  flex: 1;
+}
+
+.expand-btn {
+  text-align: center;
+  padding: 20rpx 0;
+  color: var(--primary);
+  font-size: 26rpx;
+  border-top: 1rpx solid var(--border);
+  margin-top: 16rpx;
+}
+
+.card-title.foldable {
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+}
+
+.fold-arrow {
+  margin-left: auto;
+  font-size: 28rpx;
+  color: var(--text-light);
+}

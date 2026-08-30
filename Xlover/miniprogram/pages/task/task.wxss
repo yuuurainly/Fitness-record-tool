@@ -1,0 +1,257 @@
+/* ===== 创建任务触发器 ===== */
+.create-task-trigger {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12rpx;
+  padding: 28rpx 0;
+  color: var(--primary);
+  font-size: 30rpx;
+  font-weight: 500;
+}
+
+.create-icon {
+  font-size: 40rpx;
+  font-weight: 300;
+}
+
+/* ===== 创建表单 ===== */
+.create-form {
+  padding-bottom: 32rpx;
+}
+
+.form-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 24rpx;
+}
+
+.form-title {
+  font-size: 32rpx;
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.form-close {
+  font-size: 36rpx;
+  color: var(--text-light);
+  padding: 8rpx 16rpx;
+}
+
+.create-form .form-group {
+  margin-bottom: 20rpx;
+}
+
+.create-form .form-label {
+  display: block;
+  font-size: 24rpx;
+  color: var(--text-secondary);
+  margin-bottom: 8rpx;
+}
+
+.create-form input,
+.create-form textarea {
+  width: 100%;
+  background: var(--bg-page);
+  border-radius: var(--radius);
+  padding: 20rpx 24rpx;
+  font-size: 28rpx;
+  box-sizing: border-box;
+  min-height: 80rpx;
+  line-height: 40rpx;
+}
+
+.create-form input {
+  height: 80rpx;
+}
+
+.create-form textarea {
+  min-height: 160rpx;
+  line-height: 1.5;
+}
+
+.picker-value {
+  background: var(--bg-page);
+  border-radius: var(--radius);
+  padding: 20rpx 24rpx;
+  font-size: 28rpx;
+  color: var(--text-light);
+}
+
+/* ===== 类型选择 ===== */
+.type-select {
+  display: flex;
+  gap: 16rpx;
+}
+
+.type-option {
+  flex: 1;
+  text-align: center;
+  padding: 16rpx 0;
+  border-radius: var(--radius);
+  background: var(--bg-page);
+  font-size: 24rpx;
+  color: var(--text-secondary);
+  transition: all 0.2s;
+}
+
+.type-option.active {
+  background: var(--primary-light);
+  color: var(--primary);
+  font-weight: 500;
+}
+
+/* ===== 任务列表 ===== */
+.task-list {
+  display: flex;
+  flex-direction: column;
+  gap: 20rpx;
+}
+
+/* --- 任务卡片（垂直布局） --- */
+.task-card {
+  background: var(--bg-page);
+  border-radius: 16rpx;
+  padding: 24rpx;
+}
+
+.task-card-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 12rpx;
+}
+
+.task-card-body {
+  margin-bottom: 16rpx;
+}
+
+.task-card-title {
+  font-size: 30rpx;
+  color: var(--text-primary);
+  font-weight: 600;
+  line-height: 1.4;
+  margin-bottom: 8rpx;
+}
+
+.task-card-desc {
+  font-size: 26rpx;
+  color: var(--text-secondary);
+  line-height: 1.6;
+  word-break: break-all;
+}
+
+.task-card-progress {
+  font-size: 24rpx;
+  color: var(--primary);
+  margin-top: 12rpx;
+  background: var(--primary-light);
+  display: inline-block;
+  padding: 4rpx 16rpx;
+  border-radius: 8rpx;
+}
+
+.task-card-footer {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding-top: 16rpx;
+  border-top: 1rpx solid rgba(0, 0, 0, 0.06);
+}
+
+.task-card-actions {
+  display: flex;
+  gap: 16rpx;
+}
+
+/* --- 积分 --- */
+.task-card-points {
+  font-size: 26rpx;
+  color: var(--warning);
+  font-weight: 600;
+}
+
+/* --- 状态标签 --- */
+.task-card-status {
+  font-size: 24rpx;
+  padding: 4rpx 16rpx;
+  border-radius: 8rpx;
+}
+
+.status-pending { background: #FFF3E0; color: #E65100; }
+.status-accepted { background: #E8F4FD; color: #1565C0; }
+.status-active { background: #E8F4FD; color: #1565C0; }
+.status-completed { background: #E8F5E9; color: #2E7D32; }
+.status-rejected { background: #FFEBEE; color: #C62828; }
+.status-failed { background: #FFEBEE; color: #C62828; }
+
+/* --- 类型徽章 --- */
+.task-type-badge {
+  font-size: 22rpx;
+  padding: 4rpx 14rpx;
+  border-radius: 8rpx;
+  font-weight: 500;
+}
+
+.type-once { background: #E3F2FD; color: #1565C0; }
+.type-cycle { background: #F3E5F5; color: #7B1FA2; }
+.type-habit { background: #FFF3E0; color: #E65100; }
+
+/* --- 按钮 --- */
+.btn-sm {
+  font-size: 24rpx !important;
+  padding: 10rpx 32rpx !important;
+  border-radius: 28rpx !important;
+  min-height: 0 !important;
+  line-height: 1.4 !important;
+}
+
+.btn-ghost {
+  background: transparent !important;
+  color: var(--text-light) !important;
+  border: 1rpx solid var(--border) !important;
+}
+
+.done-mark {
+  font-size: 24rpx;
+  color: var(--secondary);
+  font-weight: 500;
+}
+
+/* --- 删除按钮 --- */
+.task-delete-btn {
+  font-size: 24rpx;
+  color: var(--danger);
+  padding: 8rpx 0;
+}
+
+/* ===== 任务统计卡片 ===== */
+.task-summary-card {
+  margin-bottom: 24rpx;
+}
+
+.summary-row {
+  display: flex;
+  justify-content: space-around;
+}
+
+.summary-item {
+  text-align: center;
+}
+
+.summary-value {
+  font-size: 44rpx;
+  font-weight: 700;
+  color: var(--primary);
+}
+
+.summary-value.highlight {
+  color: var(--warning);
+}
+
+.summary-label {
+  font-size: 22rpx;
+  color: var(--text-light);
+  margin-top: 4rpx;
+}

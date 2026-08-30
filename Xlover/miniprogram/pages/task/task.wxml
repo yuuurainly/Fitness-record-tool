@@ -1,0 +1,179 @@
+<view class="container">
+  <!-- ===== 伴侣视角：发布+管理任务 ===== -->
+  <block wx:if="{{userRole === 'partner'}}">
+    <view class="card" wx:if="{{!showCreateForm}}" bindtap="toggleCreateForm">
+      <view class="create-task-trigger">
+        <text class="create-icon">＋</text>
+        <text>发布新任务</text>
+      </view>
+    </view>
+
+    <!-- 创建任务表单 -->
+    <view class="card create-form" wx:if="{{showCreateForm}}">
+      <view class="form-header">
+        <text class="form-title">发布新任务</text>
+        <text class="form-close" bindtap="toggleCreateForm">✕</text>
+      </view>
+
+      <view class="form-group">
+        <text class="form-label">任务名称</text>
+        <input placeholder="例如：今天跑步30分钟" value="{{newTask.title}}" bindinput="inputTitle" cursor-spacing="{{120}}" />
+      </view>
+      <view class="form-group">
+        <text class="form-label">任务描述（选填）</text>
+        <textarea placeholder="补充说明..." value="{{newTask.description}}" bindinput="inputDesc" maxlength="200" auto-height cursor-spacing="{{120}}" />
+      </view>
+      <view class="form-group">
+        <text class="form-label">任务类型</text>
+        <view class="type-select">
+          <view class="type-option {{newTask.type === 'once' ? 'active' : ''}}" bindtap="selectType" data-type="once">📋 单次任务</view>
+          <view class="type-option {{newTask.type === 'cycle' ? 'active' : ''}}" bindtap="selectType" data-type="cycle">🔄 周期任务</view>
+          <view class="type-option {{newTask.type === 'habit' ? 'active' : ''}}" bindtap="selectType" data-type="habit">🔥 习惯养成</view>
+        </view>
+      </view>
+
+      <!-- 周期任务参数 -->
+      <block wx:if="{{newTask.type === 'cycle'}}">
+        <view class="form-group">
+          <text class="form-label">周期模式</text>
+          <view class="type-select">
+            <view class="type-option {{newTask.cycleMode === 'daily' ? 'active' : ''}}" bindtap="selectCycleMode" data-mode="daily">每天重复</view>
+            <view class="type-option {{newTask.cycleMode === 'period' ? 'active' : ''}}" bindtap="selectCycleMode" data-mode="period">指定周期</view>
+          </view>
+        </view>
+        <block wx:if="{{newTask.cycleMode === 'daily'}}">
+          <view class="form-group">
+            <text class="form-label">每天需完成次数</text>
+            <input type="number" placeholder="1" value="{{newTask.cycleCount}}" bindinput="inputCycleCount" cursor-spacing="{{120}}" />
+          </view>
+        </block>
+        <block wx:if="{{newTask.cycleMode === 'period'}}">
+          <view class="form-group">
+            <text class="form-label">起始日期</text>
+            <picker mode="date" value="{{newTask.periodStart}}" start="{{today}}" bindchange="bindPeriodStart">
+              <view class="picker-value">{{newTask.periodStart || '选择起始日期'}}</view>
+            </picker>
+          </view>
+          <view class="form-group">
+            <text class="form-label">结束日期</text>
+            <picker mode="date" value="{{newTask.periodEnd}}" start="{{newTask.periodStart || today}}" bindchange="bindPeriodEnd">
+              <view class="picker-value">{{newTask.periodEnd || '选择结束日期'}}</view>
+            </picker>
+          </view>
+          <view class="form-group">
+            <text class="form-label">期间需完成次数</text>
+            <input type="number" placeholder="1" value="{{newTask.cycleCount}}" bindinput="inputCycleCount" cursor-spacing="{{120}}" />
+          </view>
+        </block>
+      </block>
+
+      <!-- 习惯养成参数 -->
+      <block wx:if="{{newTask.type === 'habit'}}">
+        <view class="form-group">
+          <text class="form-label">连续天数（中间断一天重新计数）</text>
+          <input type="number" placeholder="7" value="{{newTask.habitDays}}" bindinput="inputHabitDays" cursor-spacing="{{120}}" />
+        </view>
+      </block>
+
+      <view class="form-group">
+        <text class="form-label">完成积分</text>
+        <input type="number" placeholder="10" value="{{newTask.points}}" bindinput="inputPoints" cursor-spacing="{{120}}" />
+      </view>
+
+      <button class="btn btn-primary" bindtap="createTask">发布任务</button>
+    </view>
+
+    <!-- 已发布任务列表 -->
+    <view class="card" wx:if="{{tasks.length > 0}}">
+      <view class="card-title">
+        <view class="card-title-icon"></view>
+        <text>已发布任务</text>
+      </view>
+      <view class="task-list">
+        <view class="task-card" wx:for="{{tasks}}" wx:key="_id">
+          <view class="task-card-header">
+            <view class="task-type-badge type-{{item.type}}">{{item.type === 'once' ? '单次' : item.type === 'cycle' ? '周期' : '习惯'}}</view>
+            <text class="task-card-points">+{{item.points}}分</text>
+          </view>
+          <view class="task-card-body">
+            <view class="task-card-title">{{item.title}}</view>
+            <view class="task-card-desc" wx:if="{{item.description}}">{{item.description}}</view>
+            <view class="task-card-progress" wx:if="{{item.progressText}}">{{item.progressText}}</view>
+          </view>
+          <view class="task-card-footer">
+            <text class="task-card-status status-{{item.status}}">{{item.statusText}}</text>
+            <text class="task-delete-btn" wx:if="{{item.status !== 'completed' && item.status !== 'rejected'}}" bindtap="deleteTask" data-id="{{item._id}}">删除</text>
+          </view>
+        </view>
+      </view>
+    </view>
+
+    <view class="empty-state" wx:if="{{tasks.length === 0 && !showCreateForm}}">
+      <view class="empty-state-icon">📋</view>
+      <text>还没有发布任务，点击上方按钮发布</text>
+    </view>
+  </block>
+
+  <!-- ===== 主角视角：查看+接受+打卡 ===== -->
+  <block wx:if="{{userRole !== 'partner'}}">
+    <view class="card task-summary-card" wx:if="{{tasks.length > 0}}">
+      <view class="summary-row">
+        <view class="summary-item">
+          <view class="summary-value {{(pendingCount || 0) > 0 ? 'highlight' : ''}}">{{pendingCount || 0}}</view>
+          <view class="summary-label">待处理</view>
+        </view>
+        <view class="summary-item">
+          <view class="summary-value">{{activeCount || 0}}</view>
+          <view class="summary-label">进行中</view>
+        </view>
+        <view class="summary-item">
+          <view class="summary-value">{{completedCount || 0}}</view>
+          <view class="summary-label">已完成</view>
+        </view>
+      </view>
+    </view>
+
+    <view class="card" wx:if="{{tasks.length > 0}}">
+      <view class="card-title">
+        <view class="card-title-icon"></view>
+        <text>我的任务</text>
+      </view>
+      <view class="task-list">
+        <view class="task-card" wx:for="{{tasks}}" wx:key="_id">
+          <view class="task-card-header">
+            <view class="task-type-badge type-{{item.type}}">{{item.type === 'once' ? '单次' : item.type === 'cycle' ? '周期' : '习惯'}}</view>
+            <text class="task-card-points">+{{item.points}}分</text>
+          </view>
+          <view class="task-card-body">
+            <view class="task-card-title">{{item.title}}</view>
+            <view class="task-card-desc" wx:if="{{item.description}}">{{item.description}}</view>
+            <view class="task-card-progress" wx:if="{{item.progressText}}">{{item.progressText}}</view>
+          </view>
+          <view class="task-card-footer">
+            <text class="task-card-status status-{{item.status}}">{{item.statusText}}</text>
+            <view class="task-card-actions">
+              <!-- 待处理 -->
+              <block wx:if="{{item.status === 'pending'}}">
+                <button class="btn btn-primary btn-sm" bindtap="acceptTask" data-id="{{item._id}}">接受</button>
+                <button class="btn btn-ghost btn-sm" bindtap="rejectTask" data-id="{{item._id}}">拒绝</button>
+              </block>
+              <!-- 进行中 -->
+              <block wx:if="{{item.status === 'accepted' || item.status === 'active'}}">
+                <button class="btn btn-primary btn-sm" bindtap="completeTask" data-id="{{item._id}}">打卡完成</button>
+              </block>
+              <!-- 已完成 -->
+              <block wx:if="{{item.status === 'completed'}}">
+                <text class="done-mark">✓ 已完成</text>
+              </block>
+            </view>
+          </view>
+        </view>
+      </view>
+    </view>
+
+    <view class="empty-state" wx:if="{{tasks.length === 0}}">
+      <view class="empty-state-icon">📋</view>
+      <text>暂无任务</text>
+    </view>
+  </block>
+</view>

@@ -1,0 +1,215 @@
+.message-list {
+  display: flex;
+  flex-direction: column;
+  gap: 24rpx;
+  margin-bottom: 160rpx;
+}
+
+.message-item {
+  display: flex;
+  align-items: flex-start;
+  gap: 16rpx;
+}
+
+.message-item.self {
+  flex-direction: row-reverse;
+}
+
+.message-avatar {
+  width: 64rpx;
+  height: 64rpx;
+  border-radius: 50%;
+  overflow: hidden;
+  flex-shrink: 0;
+}
+
+.message-avatar image {
+  width: 100%;
+  height: 100%;
+}
+
+.message-content {
+  max-width: 70%;
+}
+
+.message-item.self .message-content {
+  text-align: right;
+}
+
+.message-name {
+  font-size: 22rpx;
+  color: var(--text-light);
+  margin-bottom: 8rpx;
+}
+
+.message-bubble {
+  background: var(--bg-card);
+  padding: 20rpx 24rpx;
+  border-radius: var(--radius);
+  font-size: 28rpx;
+  color: var(--text-primary);
+  box-shadow: var(--shadow);
+}
+
+.message-item.self .message-bubble {
+  background: var(--primary);
+  color: #fff;
+}
+
+.message-time {
+  font-size: 20rpx;
+  color: var(--text-light);
+  margin-top: 8rpx;
+}
+
+.input-area {
+  position: fixed;
+  bottom: calc(100rpx + env(safe-area-inset-bottom));
+  left: 0;
+  right: 0;
+  display: flex;
+  align-items: center;
+  gap: 16rpx;
+  padding: 20rpx 24rpx;
+  background: var(--bg-card);
+  border-top: 1rpx solid var(--border);
+  z-index: 100;
+}
+
+.message-input {
+  flex: 1;
+  background: var(--bg-page);
+  border-radius: 32rpx;
+  padding: 16rpx 24rpx;
+  font-size: 28rpx;
+  height: 72rpx;
+}
+
+.send-btn {
+  background: var(--primary);
+  color: #fff;
+  font-size: 26rpx;
+  padding: 16rpx 32rpx;
+  border-radius: 32rpx;
+  line-height: 1.5;
+}
+
+/* ===== 积分申请卡片 ===== */
+.section-title {
+  font-size: 28rpx;
+  font-weight: 600;
+  color: var(--text-primary);
+  margin: 24rpx 0 16rpx 0;
+  padding: 0 8rpx;
+}
+
+.request-list {
+  display: flex;
+  flex-direction: column;
+  gap: 16rpx;
+  margin-bottom: 24rpx;
+}
+
+.request-card {
+  background: var(--bg-card);
+  border-radius: var(--radius);
+  padding: 24rpx;
+  box-shadow: var(--shadow);
+}
+
+.request-card.pending {
+  border-left: 6rpx solid var(--warning);
+}
+
+.request-card.approved {
+  border-left: 6rpx solid var(--success);
+}
+
+.request-card.rejected {
+  border-left: 6rpx solid var(--danger);
+  opacity: 0.7;
+}
+
+.request-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 12rpx;
+}
+
+.request-type {
+  font-size: 28rpx;
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.request-points {
+  font-size: 28rpx;
+  font-weight: 600;
+  color: var(--warning);
+}
+
+.request-desc {
+  font-size: 24rpx;
+  color: var(--text-secondary);
+  margin-bottom: 16rpx;
+  line-height: 1.5;
+}
+
+.request-meta {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 16rpx;
+}
+
+.request-date {
+  font-size: 22rpx;
+  color: var(--text-light);
+}
+
+.request-status {
+  font-size: 22rpx;
+  padding: 4rpx 12rpx;
+  border-radius: 8rpx;
+}
+
+.request-status.pending {
+  background: #FFF3E0;
+  color: var(--warning);
+}
+
+.request-status.approved {
+  background: #E8F5E9;
+  color: var(--success);
+}
+
+.request-status.rejected {
+  background: #FFEBEE;
+  color: var(--danger);
+}
+
+.request-actions {
+  display: flex;
+  gap: 16rpx;
+}
+
+.btn-approve {
+  background: var(--success);
+  color: #fff;
+  border-radius: 24rpx;
+  font-size: 24rpx;
+  padding: 8rpx 24rpx;
+  margin: 0;
+  line-height: 1.8;
+}
+
+.btn-reject {
+  background: var(--danger);
+  color: #fff;
+  border-radius: 24rpx;
+  font-size: 24rpx;
+  padding: 8rpx 24rpx;
+  margin: 0;
+  line-height: 1.8;
+}

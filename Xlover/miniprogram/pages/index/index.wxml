@@ -1,0 +1,346 @@
+<view class="container">
+  <!-- 骨架屏 -->
+  <view wx:if="{{!dataLoaded}}" class="skeleton">
+    <view class="card sk-card">
+      <view class="sk-line sk-w60"></view>
+      <view class="sk-line sk-w40"></view>
+      <view class="sk-stats">
+        <view class="sk-stat"><view class="sk-line sk-w50"></view></view>
+        <view class="sk-stat"><view class="sk-line sk-w50"></view></view>
+        <view class="sk-stat"><view class="sk-line sk-w50"></view></view>
+        <view class="sk-stat"><view class="sk-line sk-w50"></view></view>
+      </view>
+    </view>
+    <view class="card sk-card" style="margin-top: 24rpx;">
+      <view class="sk-line sk-w30"></view>
+      <view class="sk-grid">
+        <view class="sk-grid-item" wx:for="{{[1,2,3,4]}}" wx:key="*this"></view>
+      </view>
+    </view>
+  </view>
+
+  <!-- 真实内容 -->
+  <block wx:if="{{dataLoaded}}">
+  <!-- 今日概览 -->
+  <view class="card overview-card">
+    <view class="overview-header">
+      <view>
+        <view class="overview-date">{{today}}</view>
+        <view class="overview-greeting">{{userRole === 'partner' ? (userInfo.nickName || '你') + '，今天是' : greeting + '，' + (userInfo.nickName || '朋友')}}</view>
+      </view>
+      <view class="streak-badge" wx:if="{{streakDays > 0}}">
+        <text class="streak-icon">🔥</text>
+        <text class="streak-text">连续 {{streakDays}} 天</text>
+      </view>
+    </view>
+
+    <view class="overview-stats">
+      <view class="stat-item" bindtap="toggleCalorieMode">
+        <view class="stat-value {{calorieMode === 'net' ? 'net-mode' : caloriesStatus}}">{{calorieMode === 'intake' ? todayCalories : netCalories}}</view>
+        <view class="stat-label">{{calorieMode === 'intake' ? '摄入 (kcal)' : '净热量 (kcal)'}}</view>
+        <view class="stat-target" wx:if="{{calorieMode === 'intake'}}">/ {{targetCalories}}</view>
+        <view class="stat-target" wx:else>点击切换</view>
+      </view>
+      <view class="stat-divider"></view>
+      <view class="stat-item">
+        <view class="stat-value">{{todayExercise}}</view>
+        <view class="stat-label">运动 (min)</view>
+      </view>
+      <view class="stat-divider"></view>
+      <view class="stat-item">
+        <view class="stat-value">{{waterCount}}/8</view>
+        <view class="stat-label">喝水 (杯)</view>
+      </view>
+      <view class="stat-divider"></view>
+      <view class="stat-item">
+        <view class="stat-value">{{werunStep}}</view>
+        <view class="stat-label">步数</view>
+      </view>
+    </view>
+
+    <view class="calories-bar">
+      <view class="calories-progress" style="width: {{caloriesPercent}}%"></view>
+    </view>
+  </view>
+
+  <!-- ===== 主角视角：打卡区域 ===== -->
+  <block wx:if="{{userRole !== 'partner'}}">
+  <view class="card">
+    <view class="card-title">
+      <view class="card-title-icon"></view>
+      <text>今日打卡</text>
+    </view>
+    <view class="checkin-grid">
+      <view class="checkin-item {{checkins.water ? 'checked' : ''}}" bindtap="checkin" data-type="water">
+        <view class="checkin-icon">💧</view>
+        <view class="checkin-name">喝水</view>
+        <view class="checkin-status">{{checkins.water ? '已完成' : '点击打卡'}}</view>
+        <view class="checkin-count" wx:if="{{waterCount > 0}}">{{waterCount}}/8</view>
+      </view>
+      <view class="checkin-item {{todayExercise > 0 ? 'checked' : ''}}" bindtap="checkin" data-type="exercise">
+        <view class="checkin-icon">🏃</view>
+        <view class="checkin-name">运动</view>
+        <view class="checkin-status">{{todayExercise > 0 ? '已完成' : '去记录'}}</view>
+        <view class="checkin-count" wx:if="{{todayExercise > 0}}">{{todayExercise}}min</view>
+      </view>
+      <view class="checkin-item {{checkins.sleep ? 'checked' : ''}}" bindtap="checkin" data-type="sleep">
+        <view class="checkin-icon">🌙</view>
+        <view class="checkin-name">早睡</view>
+        <view class="checkin-status">{{checkins.sleep ? '已完成' : '点击打卡'}}</view>
+      </view>
+      <view class="checkin-item {{todayCalories > 0 ? 'checked' : ''}}" bindtap="goRecord">
+        <view class="checkin-icon">🥗</view>
+        <view class="checkin-name">饮食</view>
+        <view class="checkin-status">{{todayCalories > 0 ? '已记录' : '去记录'}}</view>
+        <view class="checkin-count" wx:if="{{todayCalories > 0}}">{{todayCalories}}kcal</view>
+      </view>
+    </view>
+  </view>
+
+  <!-- 任务入口（主角） -->
+  <view class="card task-entry-card" wx:if="{{userRole === 'main' && (pendingTaskCount > 0 || activeTaskCount > 0)}}" bindtap="goTaskPage">
+    <view class="task-entry-main">
+      <view class="task-entry-icon">📋</view>
+      <view class="task-entry-info">
+        <view class="task-entry-title">我的任务</view>
+        <view class="task-entry-desc" wx:if="{{pendingTaskCount > 0}}">{{pendingTaskCount}} 个待处理任务</view>
+        <view class="task-entry-desc" wx:elif="{{activeTaskCount > 0}}">{{activeTaskCount}} 个进行中任务</view>
+      </view>
+    </view>
+    <view class="task-entry-arrow">›</view>
+  </view>
+
+  <!-- 目标进度 -->
+  <view class="card" wx:if="{{userRole === 'main' && profile}}">
+    <view class="card-title">
+      <view class="card-title-icon"></view>
+      <text>目标进度</text>
+    </view>
+    <view class="goal-content">
+      <view class="goal-info">
+        <view class="goal-item">
+          <text class="goal-label">当前体重</text>
+          <text class="goal-value">{{profile.currentWeight}} kg</text>
+        </view>
+        <view class="goal-arrow">→</view>
+        <view class="goal-item">
+          <text class="goal-label">目标体重</text>
+          <text class="goal-value">{{profile.targetWeight}} kg</text>
+        </view>
+      </view>
+      <view class="goal-progress">
+        <view class="goal-bar">
+          <view class="goal-fill" style="width: {{weightProgress}}%"></view>
+        </view>
+        <view class="goal-text">已减重 {{lostWeight}} kg，还需 {{remainWeight}} kg</view>
+      </view>
+      <view class="goal-days">距离目标日期还有 {{remainDays}} 天</view>
+    </view>
+  </view>
+
+  <!-- 伴侣动态 -->
+  <view class="card" wx:if="{{partnerInfo}}">
+    <view class="card-title">
+      <view class="card-title-icon"></view>
+      <text>TA 的今天</text>
+    </view>
+    <view class="partner-status">
+      <view class="partner-avatar">
+        <image src="{{partnerInfo.avatarUrl || '/images/default-avatar.png'}}" mode="aspectFill" />
+      </view>
+      <view class="partner-info">
+        <view class="partner-name">{{partnerInfo.nickName || 'TA'}}</view>
+        <view class="partner-checkins">
+          <text class="partner-tag {{partnerCheckins.water ? 'done' : ''}}">喝水</text>
+          <text class="partner-tag {{partnerCheckins.exercise ? 'done' : ''}}">运动</text>
+          <text class="partner-tag {{partnerCheckins.sleep ? 'done' : ''}}">早睡</text>
+        </view>
+      </view>
+      <view class="partner-action">
+        <button class="like-btn {{hasLiked ? 'liked' : ''}}" bindtap="toggleLike">
+          <text>{{hasLiked ? '❤️' : '🤍'}}</text>
+          <text>{{likeCount}}</text>
+        </button>
+      </view>
+    </view>
+    <view class="partner-message" wx:if="{{latestMessage}}">
+      <view class="message-bubble">
+        <text>{{latestMessage.content}}</text>
+      </view>
+    </view>
+    <view class="message-input-area">
+      <input class="message-input" placeholder="给TA留言鼓励..." value="{{inputMessage}}" bindinput="inputMessage" confirm-type="send" bindconfirm="sendMessage" cursor-spacing="{{120}}" />
+      <button class="send-btn" bindtap="sendMessage">发送</button>
+    </view>
+  </view>
+  </block>
+
+  <!-- ===== 伴侣视角：主角任务记录 ===== -->
+  <block wx:if="{{userRole === 'partner'}}">
+  <!-- 待表扬 -->
+  <view class="card praise-card" wx:if="{{pendingPraises.length > 0}}">
+    <view class="card-title">
+      <view class="card-title-icon" style="background: #ff6b9d;"></view>
+      <text>待表扬 ✨</text>
+    </view>
+    <view class="praise-list">
+      <view class="praise-item" wx:for="{{pendingPraises}}" wx:key="index">
+        <view class="praise-item-icon">{{item.icon}}</view>
+        <view class="praise-item-info">
+          <view class="praise-item-title">{{item.title}}</view>
+          <view class="praise-item-desc">{{item.desc}}</view>
+        </view>
+      </view>
+    </view>
+    <button class="btn btn-primary praise-btn" bindtap="openPraiseModal">✨ 写一句表扬</button>
+  </view>
+
+  <!-- 任务记录分类列表 -->
+  <view class="card" wx:if="{{taskCategories.length > 0}}">
+    <view class="card-title">
+      <view class="card-title-icon"></view>
+      <text>今日记录</text>
+    </view>
+    <view class="category-list">
+      <view class="category-group" wx:for="{{taskCategories}}" wx:for-item="cat" wx:for-index="catIdx" wx:key="category">
+        <view class="category-header" bindtap="toggleCategory" data-idx="{{catIdx}}">
+          <view class="category-header-left">
+            <text class="category-icon">{{cat.icon}}</text>
+            <text class="category-name">{{cat.category}}</text>
+            <text class="category-count">{{cat.count}}条</text>
+          </view>
+          <view class="category-header-right">
+            <text class="category-summary">{{cat.summary}}</text>
+            <text class="category-arrow {{cat.expanded ? 'expanded' : ''}}">›</text>
+          </view>
+        </view>
+        <view class="category-records" wx:if="{{cat.expanded}}">
+          <view class="task-item" wx:for="{{cat.records}}" wx:for-item="rec" wx:key="id">
+            <view class="task-main">
+              <view class="task-icon">{{rec.icon}}</view>
+              <view class="task-info">
+                <view class="task-title">{{rec.title}}</view>
+                <view class="task-desc">{{rec.desc}}</view>
+              </view>
+              <view class="task-time" wx:if="{{rec.time}}">{{rec.time}}</view>
+            </view>
+            <view class="task-actions" wx:if="{{rec.canLike || rec.canComment}}">
+              <view class="task-action" wx:if="{{rec.canLike}}" bindtap="likeTaskRecord" data-id="{{rec.id}}" data-catidx="{{catIdx}}" data-recidx="{{index}}">
+                <text>{{rec.liked ? '❤️' : '🤍'}}</text>
+                <text>{{rec.likeCount || ''}}</text>
+              </view>
+              <view class="task-action" wx:if="{{rec.canComment}}" bindtap="openCommentModal" data-id="{{rec.id}}" data-title="{{rec.title}}">
+                <text>💬</text>
+              </view>
+            </view>
+          </view>
+        </view>
+      </view>
+    </view>
+  </view>
+
+  <!-- 无记录空状态 -->
+  <view class="card" wx:if="{{taskCategories.length === 0 && userRole === 'partner'}}">
+    <view class="empty-state">
+      <view class="empty-state-icon">📝</view>
+      <text>她今天还没有记录</text>
+    </view>
+  </view>
+
+  <!-- 目标进度（伴侣视角：只显示进度条，不显示体重数字） -->
+  <view class="card" wx:if="{{profile}}">
+    <view class="card-title">
+      <view class="card-title-icon"></view>
+      <text>她的进度</text>
+    </view>
+    <view class="goal-content">
+      <view class="goal-progress">
+        <view class="goal-bar">
+          <view class="goal-fill" style="width: {{weightProgress}}%"></view>
+        </view>
+        <view class="goal-text">已减重 {{lostWeight}} kg，继续加油 💪</view>
+      </view>
+    </view>
+  </view>
+  </block>
+
+  <!-- 待办提醒（纯展示已开启的） -->
+  <view class="card" wx:if="{{reminders.length > 0}}">
+    <view class="card-title">
+      <view class="card-title-icon"></view>
+      <text>今日提醒</text>
+    </view>
+    <view class="reminder-list">
+      <view class="reminder-item {{item.fromPartner ? 'partner-sourced' : ''}}" wx:for="{{reminders}}" wx:key="id">
+        <view class="reminder-icon">{{item.icon}}</view>
+        <view class="reminder-content">
+          <view class="reminder-name">{{item.name}}</view>
+          <view class="reminder-time">{{item.time}}</view>
+          <view class="reminder-source" wx:if="{{item.fromPartner}}">{{item.setterName}}</view>
+        </view>
+      </view>
+    </view>
+  </view>
+  </block>
+</view>
+
+<!-- 表扬弹窗 -->
+<view class="modal" wx:if="{{showPraiseModal}}">
+  <view class="modal-mask" bindtap="closePraiseModal"></view>
+  <view class="modal-content praise-modal">
+    <view class="praise-modal-emoji">💕</view>
+    <view class="praise-modal-title">写一句表扬</view>
+    <textarea class="praise-textarea" placeholder="今天她表现得很棒..." value="{{praiseContent}}" bindinput="inputPraise" maxlength="200" auto-height cursor-spacing="{{120}}" />
+    <view class="modal-actions">
+      <button class="btn btn-secondary" bindtap="closePraiseModal">取消</button>
+      <button class="btn btn-primary" bindtap="sendPraise">发送 💕</button>
+    </view>
+  </view>
+</view>
+
+<!-- 评论弹窗 -->
+<view class="modal" wx:if="{{showCommentModal}}">
+  <view class="modal-mask" bindtap="closeCommentModal"></view>
+  <view class="modal-content">
+    <view class="modal-title-bar">
+      <text class="modal-title">评论「{{commentTargetTitle}}」</text>
+    </view>
+    <textarea class="praise-textarea" placeholder="写一句鼓励..." value="{{commentContent}}" bindinput="inputComment" maxlength="100" auto-height cursor-spacing="{{120}}" />
+    <view class="modal-actions">
+      <button class="btn btn-secondary" bindtap="closeCommentModal">取消</button>
+      <button class="btn btn-primary" bindtap="sendComment">发送</button>
+    </view>
+  </view>
+</view>
+
+<!-- 头像昵称设置弹窗 -->
+<view class="modal" wx:if="{{showUserInfoModal}}">
+  <view class="modal-mask"></view>
+  <view class="modal-content userinfo-modal">
+    <view class="userinfo-modal-title">完善资料</view>
+    <view class="userinfo-modal-desc">设置头像和昵称，让互动更亲切</view>
+    <view class="avatar-picker-area" style="margin: 32rpx 0;">
+      <button class="avatar-picker-btn" open-type="chooseAvatar" bindchooseavatar="onChooseAvatar">
+        <image class="avatar-preview" src="{{tempAvatarUrl || userInfo.avatarUrl || '/images/default-avatar.png'}}" mode="aspectFill" />
+        <view class="avatar-edit-icon">📷</view>
+      </button>
+    </view>
+    <view class="form-group">
+      <input type="nickname" class="nickname-input" placeholder="请输入昵称" value="{{tempNickName}}" bindinput="onInputNickName" bindblur="onNickNameBlur" />
+    </view>
+    <button class="btn btn-primary {{!tempNickName ? 'btn-disabled' : ''}}" bindtap="saveUserInfo">保存</button>
+  </view>
+</view>
+
+<!-- 主角收到表扬全屏特效 -->
+<view class="praise-effect" wx:if="{{showPraiseEffect}}" bindtap="closePraiseEffect">
+  <view class="praise-effect-bg"></view>
+  <view class="praise-effect-content">
+    <view class="praise-hearts">
+      <text class="heart h1">💕</text>
+      <text class="heart h2">💗</text>
+      <text class="heart h3">💖</text>
+    </view>
+    <view class="praise-effect-text">"{{praiseText}}"</view>
+  </view>
+</view>

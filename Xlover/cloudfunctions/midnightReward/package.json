@@ -1,0 +1,10 @@
+{
+  "name": "midnightReward",
+  "version": "1.0.0",
+  "description": "凌晨饮食达标奖励",
+  "main": "index.js",
+  "dependencies": {
+    "wx-server-sdk": "latest",
+    "got": "latest"
+  }
+}

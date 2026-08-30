@@ -1,0 +1,38 @@
+To honour the JVM settings for this build a single-use Daemon process will be forked. For more on this, please refer to https://docs.gradle.org/8.7/userguide/gradle_daemon.html#sec:disabling_the_daemon in the Gradle documentation.
+Daemon will be stopped at the end of the build 
+
+> Configure project :app
+WARNING: The option setting 'android.overridePathCheck=true' is experimental.
+The current default is 'false'.
+
+> Task :app:checkKotlinGradlePluginConfigurationErrors
+> Task :app:preBuild UP-TO-DATE
+> Task :app:preDebugBuild UP-TO-DATE
+> Task :app:checkDebugAarMetadata UP-TO-DATE
+> Task :app:generateDebugResValues UP-TO-DATE
+> Task :app:mapDebugSourceSetPaths UP-TO-DATE
+> Task :app:generateDebugResources UP-TO-DATE
+> Task :app:mergeDebugResources UP-TO-DATE
+> Task :app:packageDebugResources UP-TO-DATE
+> Task :app:parseDebugLocalResources UP-TO-DATE
+> Task :app:createDebugCompatibleScreenManifests UP-TO-DATE
+> Task :app:extractDeepLinksDebug UP-TO-DATE
+> Task :app:processDebugMainManifest UP-TO-DATE
+> Task :app:processDebugManifest UP-TO-DATE
+> Task :app:processDebugManifestForPackage UP-TO-DATE
+> Task :app:processDebugResources UP-TO-DATE
+> Task :app:kspDebugKotlin
+
+> Task :app:compileDebugKotlin
+w: file:///D:/AI/豆包/Xlover3.0/Xlover-Android/app/src/main/java/com/xlover/app/ui/screens/home/HomeScreen.kt:422:61 'DirectionsRun: ImageVector' is deprecated. Use the AutoMirrored version at Icons.AutoMirrored.Filled.DirectionsRun
+w: file:///D:/AI/豆包/Xlover3.0/Xlover-Android/app/src/main/java/com/xlover/app/ui/screens/main/MainScreen.kt:30:66 'Assignment: ImageVector' is deprecated. Use the AutoMirrored version at Icons.AutoMirrored.Filled.Assignment
+w: file:///D:/AI/豆包/Xlover3.0/Xlover-Android/app/src/main/java/com/xlover/app/ui/screens/main/MainScreen.kt:31:74 'TrendingUp: ImageVector' is deprecated. Use the AutoMirrored version at Icons.AutoMirrored.Filled.TrendingUp
+w: file:///D:/AI/豆包/Xlover3.0/Xlover-Android/app/src/main/java/com/xlover/app/ui/screens/main/MainScreen.kt:32:72 'Chat: ImageVector' is deprecated. Use the AutoMirrored version at Icons.AutoMirrored.Filled.Chat
+w: file:///D:/AI/豆包/Xlover3.0/Xlover-Android/app/src/main/java/com/xlover/app/ui/screens/record/RecordScreen.kt:162:57 Parameter 'success' is never used, could be renamed to _
+w: file:///D:/AI/豆包/Xlover3.0/Xlover-Android/app/src/main/java/com/xlover/app/ui/screens/record/RecordScreen.kt:162:66 Parameter 'msg' is never used, could be renamed to _
+w: file:///D:/AI/豆包/Xlover3.0/Xlover-Android/app/src/main/java/com/xlover/app/ui/screens/record/RecordScreen.kt:174:46 Parameter 'success' is never used, could be renamed to _
+w: file:///D:/AI/豆包/Xlover3.0/Xlover-Android/app/src/main/java/com/xlover/app/ui/screens/record/RecordScreen.kt:174:55 Parameter 'msg' is never used, could be renamed to _
+w: file:///D:/AI/豆包/Xlover3.0/Xlover-Android/app/src/main/java/com/xlover/app/ui/screens/record/RecordScreen.kt:329:36 'DirectionsRun: ImageVector' is deprecated. Use the AutoMirrored version at Icons.AutoMirrored.Filled.DirectionsRun
+
+BUILD SUCCESSFUL in 34s
+16 actionable tasks: 3 executed, 13 up-to-date

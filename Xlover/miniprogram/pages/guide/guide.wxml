@@ -1,0 +1,130 @@
+<view class="container guide-container">
+  <view class="guide-header">
+    <view class="logo">Xlover</view>
+    <view class="subtitle">一起变得更好</view>
+  </view>
+
+  <view class="guide-steps">
+    <view class="step-item {{currentStep >= 0 ? 'active' : ''}}">
+      <view class="step-num">1</view>
+      <view class="step-content">
+        <view class="step-title">微信登录</view>
+        <view class="step-desc">一键登录，开始你的健康之旅</view>
+      </view>
+    </view>
+
+    <view class="step-line"></view>
+
+    <view class="step-item {{currentStep >= 1 ? 'active' : ''}}">
+      <view class="step-num">2</view>
+      <view class="step-content">
+        <view class="step-title">选择角色</view>
+        <view class="step-desc">主角 or 伴侣</view>
+      </view>
+    </view>
+
+    <view class="step-line"></view>
+
+    <view class="step-item {{currentStep >= 2 ? 'active' : ''}}">
+      <view class="step-num">3</view>
+      <view class="step-content">
+        <view class="step-title">个人信息</view>
+        <view class="step-desc">设置头像和昵称</view>
+      </view>
+    </view>
+
+    <view class="step-line"></view>
+
+    <view class="step-item {{currentStep >= 3 ? 'active' : ''}}">
+      <view class="step-num">4</view>
+      <view class="step-content">
+        <view class="step-title" wx:if="{{selectedRole === 'main'}}">设定目标</view>
+        <view class="step-title" wx:else>绑定情侣</view>
+        <view class="step-desc">制定计划，一起变得更好</view>
+      </view>
+    </view>
+  </view>
+
+  <!-- 步骤1: 登录 -->
+  <view class="guide-form" wx:if="{{currentStep === 0}}">
+    <view class="form-tip">请点击下方按钮完成微信登录</view>
+    <button class="btn btn-primary" bindtap="handleLogin">微信一键登录</button>
+  </view>
+
+  <!-- 步骤2: 绑定/选择角色 -->
+  <view class="guide-form" wx:if="{{currentStep === 1}}">
+    <view class="form-tip">请选择你的角色</view>
+    <view class="role-select">
+      <view class="role-card {{selectedRole === 'main' ? 'selected' : ''}}" bindtap="selectRole" data-role="main">
+        <view class="role-icon">👩</view>
+        <view class="role-name">我是主角</view>
+        <view class="role-desc">我要开始减肥计划</view>
+      </view>
+      <view class="role-card {{selectedRole === 'partner' ? 'selected' : ''}}" bindtap="selectRole" data-role="partner">
+        <view class="role-icon">👨</view>
+        <view class="role-name">我是伴侣</view>
+        <view class="role-desc">我来监督和鼓励TA</view>
+      </view>
+    </view>
+    <button class="btn btn-primary {{!selectedRole ? 'btn-disabled' : ''}}" bindtap="confirmRole">确认角色</button>
+  </view>
+
+  <!-- 步骤3: 设置头像昵称 -->
+  <view class="guide-form" wx:if="{{currentStep === 2}}">
+    <view class="form-tip">设置你的头像和昵称</view>
+    <view class="avatar-picker-area">
+      <button class="avatar-picker-btn" open-type="chooseAvatar" bindchooseavatar="onChooseAvatar">
+        <image class="avatar-preview" src="{{tempAvatarUrl || '/images/default-avatar.png'}}" mode="aspectFill" />
+        <view class="avatar-edit-icon">📷</view>
+      </button>
+      <view class="avatar-hint">点击设置头像</view>
+    </view>
+    <view class="form-group" style="margin-top: 32rpx;">
+      <text class="form-label">昵称</text>
+      <input type="nickname" placeholder="请输入昵称" value="{{tempNickName}}" bindinput="onInputNickName" bindblur="onNickNameBlur" />
+    </view>
+    <button class="btn btn-primary {{!tempNickName ? 'btn-disabled' : ''}}" bindtap="saveUserInfo">下一步</button>
+  </view>
+
+  <!-- 步骤4: 设置目标（仅主角） -->
+  <view class="guide-form" wx:if="{{currentStep === 3 && selectedRole === 'main'}}">
+    <view class="form-tip">请填写你的基础信息</view>
+    <view class="form-group">
+      <text class="form-label">身高 (cm)</text>
+      <input type="digit" placeholder="请输入身高" value="{{profile.height}}" bindinput="inputHeight" />
+    </view>
+    <view class="form-group">
+      <text class="form-label">当前体重 (kg)</text>
+      <input type="digit" placeholder="请输入当前体重" value="{{profile.currentWeight}}" bindinput="inputWeight" />
+    </view>
+    <view class="form-group">
+      <text class="form-label">目标体重 (kg)</text>
+      <input type="digit" placeholder="请输入目标体重" value="{{profile.targetWeight}}" bindinput="inputTargetWeight" />
+    </view>
+    <view class="form-group">
+      <text class="form-label">目标日期</text>
+      <picker mode="date" value="{{profile.targetDate}}" start="{{today}}" bindchange="bindDateChange">
+        <view class="picker-value">{{profile.targetDate || '请选择目标日期'}}</view>
+      </picker>
+    </view>
+    <view class="form-group">
+      <text class="form-label">年龄</text>
+      <input type="number" placeholder="请输入年龄" value="{{profile.age}}" bindinput="inputAge" cursor-spacing="{{120}}" />
+    </view>
+    <button class="btn btn-primary {{!isProfileValid ? 'btn-disabled' : ''}}" bindtap="saveProfile">开始旅程</button>
+  </view>
+
+  <!-- 步骤4: 绑定码（仅伴侣） -->
+  <view class="guide-form" wx:if="{{currentStep === 3 && selectedRole === 'partner'}}">
+    <view class="form-tip">请输入主角提供的绑定码</view>
+    <view class="form-group">
+      <input type="text" placeholder="6位绑定码" maxlength="6" value="{{bindCode}}" bindinput="inputBindCode" cursor-spacing="{{120}}" />
+    </view>
+    <view class="bind-tip">让主角在「我的-绑定码」中查看</view>
+    <button class="btn btn-primary {{!bindCode ? 'btn-disabled' : ''}}" bindtap="bindPartner">绑定</button>
+  </view>
+
+  <view class="guide-footer" wx:if="{{currentStep === 0}}">
+    <text>登录即表示同意《用户协议》和《隐私政策》</text>
+  </view>
+</view>

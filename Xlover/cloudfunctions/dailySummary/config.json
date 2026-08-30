@@ -1,0 +1,9 @@
+{
+  "triggers": [
+    {
+      "name": "dailySummaryCheck",
+      "type": "timer",
+      "config": "0 * * * * * *"
+    }
+  ]
+}

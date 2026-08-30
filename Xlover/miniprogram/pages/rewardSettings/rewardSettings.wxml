@@ -1,0 +1,38 @@
+<view class="container">
+  <view class="card">
+    <view class="card-title">
+      <view class="card-title-icon"></view>
+      <text>添加奖励</text>
+    </view>
+    <view class="form-group">
+      <text class="form-label">奖励名称</text>
+      <input type="text" placeholder="例如：一杯奶茶" value="{{rewardName}}" bindinput="inputName" />
+    </view>
+    <view class="form-group">
+      <text class="form-label">所需积分</text>
+      <input type="number" placeholder="例如：100" value="{{rewardPoints}}" bindinput="inputPoints" cursor-spacing="{{120}}" />
+    </view>
+    <button class="btn btn-primary {{!rewardName || !rewardPoints ? 'btn-disabled' : ''}}" bindtap="addReward">添加奖励</button>
+  </view>
+
+  <view class="card" wx:if="{{rewards.length > 0}}">
+    <view class="card-title">
+      <view class="card-title-icon"></view>
+      <text>奖励列表</text>
+    </view>
+    <view class="reward-list">
+      <view class="reward-item" wx:for="{{rewards}}" wx:key="_id">
+        <view class="reward-info">
+          <view class="reward-name">{{item.name}}</view>
+          <view class="reward-points">{{item.points}} 积分</view>
+        </view>
+        <view class="reward-delete" bindtap="deleteReward" data-id="{{item._id}}">✕</view>
+      </view>
+    </view>
+  </view>
+
+  <view class="empty-state" wx:else>
+    <view class="empty-state-icon">🎁</view>
+    <text>还没有设置奖励，快去添加吧~</text>
+  </view>
+</view>

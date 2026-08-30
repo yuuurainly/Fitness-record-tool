@@ -1,0 +1,207 @@
+<view class="container">
+  <!-- 体重趋势（仅主角） -->
+  <view class="card" wx:if="{{userRole !== 'partner' && weightHistory.length > 0}}">
+    <view class="card-title">
+      <view class="card-title-icon"></view>
+      <text>体重趋势</text>
+    </view>
+    <view class="chart-container">
+      <canvas type="2d" id="progressWeightChart" style="width: 100%; height: 300rpx;"></canvas>
+    </view>
+  </view>
+
+  <!-- 打卡日历（仅主角） -->
+  <view class="card" wx:if="{{userRole !== 'partner'}}">
+    <view class="card-title foldable" bindtap="toggleSection" data-key="expandCalendar">
+      <view class="card-title-icon"></view>
+      <text>打卡日历</text>
+      <text class="fold-arrow">{{expandCalendar ? '↑' : '↓'}}</text>
+    </view>
+    <view hidden="{{!expandCalendar}}">
+      <view class="calendar-header">
+        <view class="calendar-month">{{currentYear}}年{{currentMonth}}月</view>
+        <view class="calendar-nav">
+          <text bindtap="prevMonth">‹</text>
+          <text bindtap="nextMonth">›</text>
+        </view>
+      </view>
+      <view class="calendar-weekdays">
+        <text wx:for="{{weekdays}}" wx:key="*this">{{item}}</text>
+      </view>
+      <view class="calendar-days">
+        <view class="calendar-day {{item.empty ? 'empty' : ''}} {{item.checked ? 'checked' : ''}} {{item.today ? 'today' : ''}}" wx:for="{{calendarDays}}" wx:key="key">
+          <text>{{item.day || ''}}</text>
+          <view class="check-dot" wx:if="{{item.checked}}"></view>
+        </view>
+      </view>
+      <view class="calendar-legend">
+        <view class="legend-item">
+          <view class="legend-dot checked"></view>
+          <text>已打卡</text>
+        </view>
+        <view class="legend-item">
+          <view class="legend-dot today"></view>
+          <text>今天</text>
+        </view>
+      </view>
+    </view>
+  </view>
+
+  <!-- 热量趋势（仅主角） -->
+  <view class="card" wx:if="{{userRole !== 'partner' && caloriesTrend.length > 0}}">
+    <view class="card-title foldable" bindtap="toggleSection" data-key="expandCalories">
+      <view class="card-title-icon"></view>
+      <text>热量摄入趋势 (7日)</text>
+      <text class="fold-arrow">{{expandCalories ? '↑' : '↓'}}</text>
+    </view>
+    <view hidden="{{!expandCalories}}">
+      <view class="trend-list">
+        <view class="trend-item" wx:for="{{caloriesTrend}}" wx:key="date">
+          <view class="trend-date">{{item.date}}</view>
+          <view class="trend-bar-container">
+            <view class="trend-bar" style="width: {{item.percent}}%"></view>
+          </view>
+          <view class="trend-value">{{item.calories}}</view>
+        </view>
+      </view>
+    </view>
+  </view>
+
+  <!-- 运动统计（仅主角） -->
+  <view class="card" wx:if="{{userRole !== 'partner' && exerciseStats.length > 0}}">
+    <view class="card-title foldable" bindtap="toggleSection" data-key="expandExercise">
+      <view class="card-title-icon"></view>
+      <text>运动统计 (本周)</text>
+      <text class="fold-arrow">{{expandExercise ? '↑' : '↓'}}</text>
+    </view>
+    <view hidden="{{!expandExercise}}">
+      <view class="stats-list">
+        <view class="stats-item" wx:for="{{exerciseStats}}" wx:key="type">
+          <view class="stats-icon">{{item.icon}}</view>
+          <view class="stats-info">
+            <view class="stats-name">{{item.name}}</view>
+            <view class="stats-bar-container">
+              <view class="stats-bar" style="width: {{item.percent}}%"></view>
+            </view>
+          </view>
+          <view class="stats-value">{{item.duration}} min</view>
+        </view>
+      </view>
+    </view>
+  </view>
+
+  <!-- 任务统计（伴侣视角） -->
+  <block wx:if="{{userRole === 'partner'}}">
+    <view class="card">
+      <view class="card-title">
+        <view class="card-title-icon"></view>
+        <text>任务总览</text>
+      </view>
+      <view class="task-stats-grid">
+        <view class="task-stat-item">
+          <view class="task-stat-value">{{taskStats.totalTasks}}</view>
+          <view class="task-stat-label">总任务数</view>
+        </view>
+        <view class="task-stat-item">
+          <view class="task-stat-value">{{taskStats.completedTasks}}</view>
+          <view class="task-stat-label">已完成</view>
+        </view>
+        <view class="task-stat-item">
+          <view class="task-stat-value">{{taskStats.activeTasks}}</view>
+          <view class="task-stat-label">进行中</view>
+        </view>
+        <view class="task-stat-item">
+          <view class="task-stat-value">{{taskStats.pendingTasks}}</view>
+          <view class="task-stat-label">待接受</view>
+        </view>
+      </view>
+      <view class="task-rate-bar">
+        <view class="task-rate-label">完成率</view>
+        <view class="task-rate-track">
+          <view class="task-rate-fill" style="width: {{taskStats.completionRate}}%"></view>
+        </view>
+        <view class="task-rate-value">{{taskStats.completionRate}}%</view>
+      </view>
+    </view>
+
+    <view class="card">
+      <view class="card-title">
+        <view class="card-title-icon"></view>
+        <text>积分统计</text>
+      </view>
+      <view class="points-summary">
+        <view class="points-main">
+          <view class="points-number {{userRole === 'partner' ? 'clickable' : ''}}" bindtap="{{userRole === 'partner' ? 'editMainPoints' : ''}}">{{taskStats.totalPoints}}</view>
+          <view class="points-label">总积分</view>
+        </view>
+      </view>
+    </view>
+  </block>
+
+  <!-- 任务统计（主角视角，在徽章上方） -->
+  <block wx:if="{{userRole !== 'partner'}}">
+    <view class="card">
+      <view class="card-title">
+        <view class="card-title-icon"></view>
+        <text>任务统计</text>
+      </view>
+      <view class="task-stats-grid">
+        <view class="task-stat-item">
+          <view class="task-stat-value">{{taskStats.totalTasks}}</view>
+          <view class="task-stat-label">总任务数</view>
+        </view>
+        <view class="task-stat-item">
+          <view class="task-stat-value">{{taskStats.completedTasks}}</view>
+          <view class="task-stat-label">已完成</view>
+        </view>
+        <view class="task-stat-item">
+          <view class="task-stat-value">{{taskStats.activeTasks}}</view>
+          <view class="task-stat-label">进行中</view>
+        </view>
+        <view class="task-stat-item">
+          <view class="task-stat-value">{{taskStats.totalPoints}}</view>
+          <view class="task-stat-label">总积分</view>
+        </view>
+      </view>
+    </view>
+  </block>
+
+  <!-- 成就徽章（置底，仅主角） -->
+  <view class="card" wx:if="{{userRole !== 'partner'}}">
+    <view class="card-title foldable" bindtap="toggleSection" data-key="expandBadges">
+      <view class="card-title-icon"></view>
+      <text>成就徽章</text>
+      <text class="fold-arrow">{{expandBadges ? '↑' : '↓'}}</text>
+    </view>
+    <view hidden="{{!expandBadges}}">
+      <view class="badge-grid">
+        <view class="badge-item {{item.unlocked ? 'unlocked' : 'locked'}}" wx:for="{{badges}}" wx:key="id">
+          <view class="badge-icon">{{item.icon}}</view>
+          <view class="badge-name">{{item.name}}</view>
+          <view class="badge-desc">{{item.desc}}</view>
+        </view>
+      </view>
+    </view>
+  </view>
+
+  <!-- 伴侣修改积分弹窗 -->
+  <view class="modal" wx:if="{{showPointsModal}}">
+    <view class="modal-mask" bindtap="closePointsModal"></view>
+    <view class="modal-content points-modal">
+      <view class="points-modal-title">调整积分</view>
+      <view class="points-modal-current">当前总积分：<text class="points-modal-value">{{taskStats.totalPoints}}</text></view>
+      <view class="form-group">
+        <text class="form-label">调整数量（正数=增加，负数=减少）</text>
+        <input class="form-input" type="text" placeholder="如：10 或 -5" value="{{pointsDelta}}" bindinput="inputPointsDelta" />
+      </view>
+      <view class="form-group">
+        <text class="form-label">调整原因</text>
+        <input class="form-input" placeholder="如：额外奖励" value="{{pointsReason}}" bindinput="inputPointsReason" />
+      </view>
+      <view class="modal-actions">
+        <button class="btn btn-secondary" bindtap="closePointsModal">取消</button>
+        <button class="btn btn-primary" bindtap="savePointsAdjust">确认调整</button>
+      </view>
+    </view>
+  </view>
+</view>

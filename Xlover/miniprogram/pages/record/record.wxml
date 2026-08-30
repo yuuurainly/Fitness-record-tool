@@ -1,0 +1,57 @@
+<view class="container">
+  <view class="record-menu">
+    <view class="menu-item" bindtap="goFood">
+      <view class="menu-icon food-icon">🥗</view>
+      <view class="menu-info">
+        <view class="menu-name">饮食记录</view>
+        <view class="menu-desc">记录每餐摄入，管理热量</view>
+      </view>
+      <view class="menu-arrow">›</view>
+      <view class="menu-today">{{todayCalories}} kcal</view>
+    </view>
+
+    <view class="menu-item" bindtap="goExercise">
+      <view class="menu-icon exercise-icon">🏃</view>
+      <view class="menu-info">
+        <view class="menu-name">运动记录</view>
+        <view class="menu-desc">记录运动，同步微信步数</view>
+      </view>
+      <view class="menu-arrow">›</view>
+      <view class="menu-today">{{todayExercise}} min</view>
+    </view>
+
+    <view class="menu-item" bindtap="goWeight" wx:if="{{userRole === 'main'}}">
+      <view class="menu-icon weight-icon">⚖️</view>
+      <view class="menu-info">
+        <view class="menu-name">体重记录</view>
+        <view class="menu-desc">记录体重变化，追踪BMI</view>
+      </view>
+      <view class="menu-arrow">›</view>
+      <view class="menu-today">{{latestWeight || '--'}} kg</view>
+    </view>
+  </view>
+
+  <!-- 今日记录列表 -->
+  <view class="card" wx:if="{{todayRecords.length > 0}}">
+    <view class="card-title">
+      <view class="card-title-icon"></view>
+      <text>今日记录</text>
+    </view>
+    <view class="record-list">
+      <view class="record-item" wx:for="{{todayRecords}}" wx:key="id">
+        <view class="record-icon">{{item.icon}}</view>
+        <view class="record-content">
+          <view class="record-name">{{item.name}}</view>
+          <view class="record-detail">{{item.detail}}</view>
+        </view>
+        <view class="record-value">{{item.value}}</view>
+        <view class="record-time">{{item.time}}</view>
+      </view>
+    </view>
+  </view>
+
+  <view class="empty-state" wx:else>
+    <view class="empty-state-icon">📝</view>
+    <text>今天还没有记录哦，快去添加吧~</text>
+  </view>
+</view>

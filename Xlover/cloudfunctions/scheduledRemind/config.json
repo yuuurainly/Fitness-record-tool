@@ -1,0 +1,9 @@
+{
+  "triggers": [
+    {
+      "name": "remindCheck",
+      "type": "timer",
+      "config": "0 * * * * * *"
+    }
+  ]
+}

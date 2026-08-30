@@ -1,0 +1,105 @@
+<view class="container">
+  <!-- 今日热量概览 -->
+  <view class="card calories-overview">
+    <view class="calories-circle">
+      <view class="calories-number">{{todayCalories}}</view>
+      <view class="calories-unit">kcal / {{targetCalories}}</view>
+    </view>
+    <view class="calories-status {{caloriesStatus}}">
+      {{caloriesStatus === 'over' ? '已超标' : '剩余 ' + (targetCalories - todayCalories) + ' kcal'}}
+    </view>
+  </view>
+
+  <!-- 搜索食物 -->
+  <view class="search-bar">
+    <input type="text" placeholder="搜索食物名称..." value="{{searchKey}}" bindinput="onSearch" />
+    <text class="search-icon">🔍</text>
+  </view>
+
+  <!-- 食物列表 -->
+  <view class="card" wx:if="{{foodList.length > 0}}">
+    <view class="food-list">
+      <view class="food-item" wx:for="{{foodList}}" wx:key="_id" wx:for-index="idx" wx:if="{{idx < showFoodList}}" bindtap="selectFood" data-item="{{item}}">
+        <view class="food-info">
+          <view class="food-name">{{item.name}}</view>
+          <view class="food-calories">{{item.calories}} kcal / 100g</view>
+        </view>
+        <view class="food-add">+</view>
+      </view>
+    </view>
+    <view class="expand-btn" bindtap="toggleFoodList">
+      <text>{{expandFoodList ? '收起 ↑' : '查看更多 (' + (foodList.length - 3) + ') ↓'}}</text>
+    </view>
+  </view>
+
+  <!-- 自定义食物 -->
+  <view class="card">
+    <view class="card-title foldable" bindtap="toggleCustom">
+      <view class="card-title-icon"></view>
+      <text>自定义食物</text>
+      <text class="fold-arrow">{{expandCustom ? '↑' : '↓'}}</text>
+    </view>
+    <view hidden="{{!expandCustom}}">
+      <view class="form-group">
+        <text class="form-label">食物名称</text>
+        <input type="text" placeholder="请输入食物名称" value="{{customFood.name}}" bindinput="inputCustomName" />
+      </view>
+      <view class="form-group">
+        <text class="form-label">热量 (kcal/100g)</text>
+        <input type="digit" placeholder="请输入热量" value="{{customFood.calories}}" bindinput="inputCustomCalories" />
+      </view>
+      <view class="form-group">
+        <text class="form-label">摄入量 (g)</text>
+        <input type="digit" placeholder="请输入摄入量" value="{{customFood.amount}}" bindinput="inputCustomAmount" cursor-spacing="{{120}}" />
+      </view>
+      <view class="form-group">
+        <text class="form-label">餐次</text>
+        <picker mode="selector" range="{{meals}}" value="{{mealIndex}}" bindchange="bindMealChange">
+          <view class="picker-value">{{meals[mealIndex]}}</view>
+        </picker>
+      </view>
+      <button class="btn btn-primary {{!customFood.name || !customFood.calories || !customFood.amount ? 'btn-disabled' : ''}}" bindtap="addCustomFood">添加记录</button>
+    </view>
+  </view>
+
+  <!-- 今日饮食记录 -->
+  <view class="card" wx:if="{{todayFoodLogs.length > 0}}">
+    <view class="card-title">
+      <view class="card-title-icon"></view>
+      <text>今日记录</text>
+    </view>
+    <view class="food-log-list">
+      <view class="food-log-item" wx:for="{{todayFoodLogs}}" wx:key="_id">
+        <view class="food-log-info">
+          <view class="food-log-name">{{item.name}}</view>
+          <view class="food-log-detail">{{item.amount}}g · {{item.meal}}</view>
+        </view>
+        <view class="food-log-calories">{{item.totalCalories}} kcal</view>
+        <view class="food-log-delete" bindtap="deleteFoodLog" data-id="{{item._id}}">✕</view>
+      </view>
+    </view>
+  </view>
+</view>
+
+<!-- 选择食物弹窗 -->
+<view class="modal" wx:if="{{showModal}}">
+  <view class="modal-mask" bindtap="closeModal"></view>
+  <view class="modal-content">
+    <view class="modal-title">{{selectedFood.name}}</view>
+    <view class="modal-info">{{selectedFood.calories}} kcal / 100g</view>
+    <view class="form-group">
+      <text class="form-label">摄入量 (g)</text>
+      <input type="digit" placeholder="请输入摄入量" value="{{inputAmount}}" bindinput="inputAmount" cursor-spacing="{{120}}" />
+    </view>
+    <view class="form-group">
+      <text class="form-label">餐次</text>
+      <picker mode="selector" range="{{meals}}" value="{{mealIndex}}" bindchange="bindMealChange">
+        <view class="picker-value">{{meals[mealIndex]}}</view>
+      </picker>
+    </view>
+    <view class="modal-actions">
+      <button class="btn btn-secondary" bindtap="closeModal">取消</button>
+      <button class="btn btn-primary" bindtap="confirmAddFood">确认</button>
+    </view>
+  </view>
+</view>

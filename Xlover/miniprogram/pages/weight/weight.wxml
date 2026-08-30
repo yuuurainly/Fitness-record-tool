@@ -1,0 +1,57 @@
+<view class="container">
+  <!-- 当前体重 -->
+  <view class="card weight-current">
+    <view class="weight-display">
+      <view class="weight-number">{{latestWeight || '--'}}</view>
+      <view class="weight-unit">kg</view>
+    </view>
+    <view class="weight-bmi" wx:if="{{latestBMI}}">BMI {{latestBMI}}</view>
+    <view class="weight-status {{bmiStatus}}" wx:if="{{bmiStatusText}}">{{bmiStatusText}}</view>
+  </view>
+
+  <!-- 体重趋势图 -->
+  <view class="card">
+    <view class="card-title">
+      <view class="card-title-icon"></view>
+      <text>体重变化</text>
+    </view>
+    <view class="chart-container">
+      <canvas type="2d" id="weightChart" style="width: 100%; height: 300rpx;"></canvas>
+    </view>
+  </view>
+
+  <!-- 记录体重 -->
+  <view class="card">
+    <view class="card-title">
+      <view class="card-title-icon"></view>
+      <text>记录今日体重</text>
+    </view>
+    <view class="form-group">
+      <text class="form-label">体重 (kg)</text>
+      <input type="digit" placeholder="请输入今日体重" value="{{inputWeight}}" bindinput="inputWeight" />
+    </view>
+    <view class="form-group">
+      <text class="form-label">体脂率 (%)</text>
+      <input type="digit" placeholder="选填" value="{{inputBodyFat}}" bindinput="inputBodyFat" cursor-spacing="{{120}}" />
+    </view>
+    <button class="btn btn-primary {{!inputWeight ? 'btn-disabled' : ''}}" bindtap="saveWeight">记录</button>
+  </view>
+
+  <!-- 历史记录 -->
+  <view class="card" wx:if="{{weightHistory.length > 0}}">
+    <view class="card-title">
+      <view class="card-title-icon"></view>
+      <text>历史记录</text>
+    </view>
+    <view class="history-list">
+      <view class="history-item" wx:for="{{weightHistory}}" wx:key="_id">
+        <view class="history-date">{{item.date}}</view>
+        <view class="history-weight">{{item.weight}} kg</view>
+        <view class="history-bmi" wx:if="{{item.bmi}}">BMI {{item.bmi}}</view>
+        <view class="history-change {{item.change > 0 ? 'up' : 'down'}}" wx:if="{{item.change !== undefined}}">
+          {{item.change > 0 ? '+' : ''}}{{item.change}} kg
+        </view>
+      </view>
+    </view>
+  </view>
+</view>

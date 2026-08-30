@@ -1,0 +1,45 @@
+# ================================================================
+#  Xlover 后端服务 - Cloudflare Tunnel 配置模板
+# ================================================================
+#  使用方法（二选一）：
+#
+#  【方案 A · 快速测试】无需域名、无需注册账号
+#    双击 "00-快速临时隧道.bat" 即可，自动分配一个 trycloudflare.com 域名
+#
+#  【方案 B · 正式使用（推荐）】绑定自己的域名 + 长期稳定
+#    1) 注册 Cloudflare 账号并把域名 NS 接入 Cloudflare（免费）
+#    2) 登录 Zero Trust：https://one.dash.cloudflare.com/ → Networks → Tunnels
+#    3) 双击 "01-登录并创建隧道.bat" 按网页授权
+#    4) 完成后修改下方 tunnel: 和 credentials-file: 两行，填写你的隧道 ID/令牌
+#    5) 把 ingress 规则里的 hostname 改成你的真实域名
+#    6) 双击 "02-启动正式隧道.bat"
+# ================================================================
+
+tunnel: xlover-backend              # ① 改成 Zero Trust 里创建的隧道名或 ID
+credentials-file: .\.cloudflared\cert.pem   # ② 改成登录后实际生成的 cert.pem / xxx.json 路径
+
+# 连接本地后端服务（Xlover-Server 默认端口 3000）
+ingress:
+  # --- 正式域名模式 ---
+  - hostname: xlover.example.com     # ③ 改成你自己在 Cloudflare 托管的真实域名
+    service: http://localhost:3000
+    originRequest:
+      connectTimeout: 30s
+      noTLSVerify: true
+      httpHostHeader: localhost
+
+  # --- WebSocket 路径（确保协议升级）---
+  - hostname: xlover.example.com     # 与上相同
+    path: ^/ws.*
+    service: http://localhost:3000
+    originRequest:
+      connectTimeout: 10s
+      noTLSVerify: true
+      httpHostHeader: localhost
+      disableChunkedEncoding: false
+
+  # 兜底：没匹配到的全部转发到本地 3000
+  - service: http://localhost:3000
+    originRequest:
+      connectTimeout: 10s
+      noTLSVerify: true

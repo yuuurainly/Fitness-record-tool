@@ -1,0 +1,51 @@
+<view class="container">
+  <!-- 积分申请列表 -->
+  <view class="section-title" wx:if="{{pointRequests.length > 0}}">
+    <text wx:if="{{userRole === 'partner'}}">📝 待审核积分申请 ({{pendingCount}})</text>
+    <text wx:else>📝 我的积分申请</text>
+  </view>
+
+  <view class="request-list" wx:if="{{pointRequests.length > 0}}">
+    <view class="request-card {{item.status}}" wx:for="{{pointRequests}}" wx:key="_id">
+      <view class="request-header">
+        <view class="request-type">{{item.type === 'sleep' ? '🌙' : '🏃'}} {{item.title}}</view>
+        <view class="request-points">+{{item.points}} 积分</view>
+      </view>
+      <view class="request-desc">{{item.description}}</view>
+      <view class="request-meta">
+        <text class="request-date">{{item.date}}</text>
+        <text class="request-status {{item.status}}">{{item.statusText}}</text>
+      </view>
+      <!-- 伴侣视角：显示审核按钮 -->
+      <view class="request-actions" wx:if="{{userRole === 'partner' && item.status === 'pending'}}">
+        <button class="btn-approve" size="mini" bindtap="approveRequest" data-id="{{item._id}}">通过</button>
+        <button class="btn-reject" size="mini" bindtap="rejectRequest" data-id="{{item._id}}">拒绝</button>
+      </view>
+    </view>
+  </view>
+
+  <!-- 留言列表 -->
+  <view class="section-title">💬 互动留言</view>
+  <view class="message-list" wx:if="{{messages.length > 0}}">
+    <view class="message-item {{item.isSelf ? 'self' : ''}}" wx:for="{{messages}}" wx:key="_id">
+      <view class="message-avatar">
+        <image src="{{item.avatarUrl || '/images/default-avatar.png'}}" mode="aspectFill" />
+      </view>
+      <view class="message-content">
+        <view class="message-name">{{item.nickName}}</view>
+        <view class="message-bubble">{{item.content}}</view>
+        <view class="message-time">{{item.time}}</view>
+      </view>
+    </view>
+  </view>
+
+  <view class="empty-state" wx:if="{{messages.length === 0 && pointRequests.length === 0}}">
+    <view class="empty-state-icon">💬</view>
+    <text>还没有留言，快给TA发一条吧~</text>
+  </view>
+
+  <view class="input-area">
+    <input class="message-input" placeholder="输入留言..." value="{{inputContent}}" bindinput="inputContent" confirm-type="send" bindconfirm="sendMessage" cursor-spacing="{{75}}" />
+    <button class="send-btn" bindtap="sendMessage">发送</button>
+  </view>
+</view>

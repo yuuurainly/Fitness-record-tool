@@ -1,0 +1,46 @@
+<view class="container">
+  <view class="points-card">
+    <view class="points-label">当前积分</view>
+    <view class="points-value">{{totalPoints}}</view>
+  </view>
+
+  <view class="card" wx:if="{{rewards.length > 0}}">
+    <view class="card-title">
+      <view class="card-title-icon"></view>
+      <text>可兑换奖励</text>
+    </view>
+    <view class="reward-list">
+      <view class="reward-item {{item.canExchange ? 'can-exchange' : ''}}" wx:for="{{rewards}}" wx:key="_id">
+        <view class="reward-info">
+          <view class="reward-name">{{item.name}}</view>
+          <view class="reward-points">{{item.points}} 积分</view>
+        </view>
+        <button 
+          class="reward-btn {{item.canExchange && !item.exchanged ? '' : 'btn-disabled'}}" 
+          bindtap="exchangeReward" 
+          data-id="{{item._id}}"
+        >
+          {{item.exchanged ? '已兑换' : (item.canExchange ? '兑换' : '积分不足')}}
+        </button>
+      </view>
+    </view>
+  </view>
+
+  <view class="card" wx:if="{{claims.length > 0}}">
+    <view class="card-title">
+      <view class="card-title-icon"></view>
+      <text>兑换记录</text>
+    </view>
+    <view class="claim-list">
+      <view class="claim-item" wx:for="{{claims}}" wx:key="_id">
+        <view class="claim-name">{{item.rewardName}}</view>
+        <view class="claim-status {{item.status}}">{{item.status === 'pending' ? '待兑现' : '已完成'}}</view>
+      </view>
+    </view>
+  </view>
+
+  <view class="empty-state" wx:if="{{rewards.length === 0}}">
+    <view class="empty-state-icon">🎁</view>
+    <text>暂无奖励，让伴侣去设置吧~</text>
+  </view>
+</view>

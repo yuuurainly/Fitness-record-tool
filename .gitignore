@@ -1,0 +1,106 @@
+# ============== Node.js ==============
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+package-lock.json.bak
+.cache/
+.parcel-cache/
+dist/
+build/
+
+# ============== Python ==============
+__pycache__/
+*.py[cod]
+*.pyc
+*.pyo
+*.pyd
+.Python
+*.so
+*.egg-info/
+*.egg
+.venv/
+venv/
+env/
+.pytest_cache/
+.mypy_cache/
+
+# ============== 编辑器 ==============
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+.DS_Store
+Thumbs.db
+
+# ============== 日志 & 临时文件 ==============
+logs/
+*.log
+*.err
+*.out
+run.err.log
+run.log
+tunnel.log
+
+# ============== 二进制（cloudflared / frpc） ==============
+*.exe
+!deploy/migrate-to-mini-host/*.bat  # 保留打包脚本
+!Xlover-Server/启动Xlover服务.bat
+
+# ============== SQLite 数据库 ==============
+# !! 重要：数据库含用户隐私数据，强烈建议不进仓库
+**/xlover.db
+**/xlover.db-shm
+**/xlover.db-wal
+**/database/*.bak*
+**/database/backups/
+
+# ============== 部署运行时 ==============
+deploy/cloudflare-tunnel/.last-tunnel-url
+deploy/cloudflare-tunnel/cloudflared.exe
+deploy/cloudflare-tunnel/tunnel.log
+deploy/xlover-migrate-package.tar.gz
+
+# ============== 环境变量（含密钥） ==============
+**/.env
+.env
+.env.local
+.*.env
+*.pem
+*.key
+id_rsa*
+
+# ============== 打包产物 ==============
+*.zip
+*.tar.gz
+*.tar
+
+# ============== Android (Xlover-Android) ==============
+**/.gradle/
+Xlover-Android/.gradle/
+**/local.properties
+Xlover-Android/local.properties
+**/build/
+Xlover-Android/build/
+Xlover-Android/**/build/
+**/*.apk
+**/*.aab
+Xlover-Android/*.apk
+Xlover-Android/**/*.apk
+Xlover-Android/**/*.aab
+Xlover-Android/build_log*.txt
+Xlover-Android/build_log*.md
+Xlover-Android/stdout*.txt
+Xlover-Android/stderr*.txt
+Xlover-Android/captures/
+*.keystore
+*.jks
+
+# ============== 临时 / 调试 ==============
+_tmp_*.txt
+tmp/
+_temp/
+_temp_*
+ftp-server.js
+ftpserver.py

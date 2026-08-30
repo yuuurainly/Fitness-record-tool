@@ -1,0 +1,56 @@
+.form-group {
+  margin-bottom: 24rpx;
+}
+
+.form-label {
+  display: block;
+  font-size: 26rpx;
+  color: var(--text-secondary);
+  margin-bottom: 12rpx;
+}
+
+.form-group input {
+  background: var(--bg-page);
+  border-radius: var(--radius);
+  padding: 20rpx 24rpx;
+  font-size: 28rpx;
+}
+
+.reward-list {
+  display: flex;
+  flex-direction: column;
+  gap: 16rpx;
+}
+
+.reward-item {
+  display: flex;
+  align-items: center;
+  padding: 20rpx;
+  background: var(--bg-page);
+  border-radius: var(--radius);
+}
+
+.reward-info {
+  flex: 1;
+}
+
+.reward-name {
+  font-size: 28rpx;
+  color: var(--text-primary);
+}
+
+.reward-points {
+  font-size: 24rpx;
+  color: var(--warning);
+  margin-top: 4rpx;
+}
+
+.reward-delete {
+  width: 40rpx;
+  height: 40rpx;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--danger);
+  font-size: 24rpx;
+}

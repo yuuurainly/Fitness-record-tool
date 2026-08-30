@@ -1,0 +1,124 @@
+<view class="container">
+  <!-- 我的提醒 -->
+  <view class="card">
+    <view class="section-header">
+      <view class="card-title">
+        <view class="card-title-icon"></view>
+        <text>我的提醒</text>
+      </view>
+      <view class="add-type-btn" bindtap="toggleAddForm" data-for-partner="{{false}}">+ 添加</view>
+    </view>
+    <view class="remind-list">
+      <view class="remind-item {{item.isCustom ? 'custom' : ''}}" wx:for="{{myReminders}}" wx:key="id">
+        <view class="remind-info">
+          <view class="remind-icon">{{item.icon}}</view>
+          <view class="remind-detail">
+            <view class="remind-name">{{item.name}}</view>
+            <view class="remind-desc">{{item.desc || '自定义提醒'}}</view>
+          </view>
+        </view>
+        <view class="remind-action">
+          <switch checked="{{item.enabled}}" bindchange="toggleReminder" data-id="{{item.id}}" />
+          <picker mode="time" value="{{item.time}}" bindchange="bindTimeChange" data-id="{{item.id}}">
+            <view class="time-picker">{{item.time}}</view>
+          </picker>
+          <view class="delete-btn" wx:if="{{item.isCustom}}" bindtap="deleteReminder" data-id="{{item.id}}">×</view>
+        </view>
+      </view>
+      <view class="empty-hint" wx:if="{{myReminders.length === 0}}">暂无提醒</view>
+    </view>
+  </view>
+
+  <!-- TA给我设的提醒（主角视角） -->
+  <view class="card" wx:if="{{userRole !== 'partner' && fromPartnerReminders.length > 0}}">
+    <view class="card-title">
+      <view class="card-title-icon" style="background: #ff6b9d;"></view>
+      <text>TA给我设的提醒</text>
+    </view>
+    <view class="remind-list">
+      <view class="remind-item partner-remind" wx:for="{{fromPartnerReminders}}" wx:key="id">
+        <view class="remind-info">
+          <view class="remind-icon">{{item.icon}}</view>
+          <view class="remind-detail">
+            <view class="remind-name">{{item.name}} <text class="partner-tag">来自{{item.setterName || '伴侣'}}</text></view>
+          </view>
+        </view>
+        <view class="remind-action">
+          <switch checked="{{item.enabled}}" bindchange="toggleReminder" data-id="{{item.id}}" />
+          <picker mode="time" value="{{item.time}}" bindchange="bindTimeChange" data-id="{{item.id}}">
+            <view class="time-picker">{{item.time}}</view>
+          </picker>
+          <view class="delete-btn" bindtap="deleteReminder" data-id="{{item.id}}">×</view>
+        </view>
+      </view>
+    </view>
+  </view>
+
+  <!-- 给TA设置提醒（伴侣视角） -->
+  <view class="card" wx:if="{{userRole === 'partner'}}">
+    <view class="section-header">
+      <view class="card-title">
+        <view class="card-title-icon" style="background: #ff6b9d;"></view>
+        <text>给TA设置提醒</text>
+      </view>
+      <view class="add-type-btn" bindtap="toggleAddForm" data-for-partner="{{true}}">+ 添加</view>
+    </view>
+    <view class="remind-list" wx:if="{{forPartnerReminders.length > 0}}">
+      <view class="remind-item for-partner" wx:for="{{forPartnerReminders}}" wx:key="id">
+        <view class="remind-info">
+          <view class="remind-icon">{{item.icon}}</view>
+          <view class="remind-detail">
+            <view class="remind-name">{{item.name}}</view>
+            <view class="remind-desc">自定义提醒</view>
+          </view>
+        </view>
+        <view class="remind-action">
+          <switch checked="{{item.enabled}}" bindchange="toggleReminder" data-id="{{item.id}}" />
+          <picker mode="time" value="{{item.time}}" bindchange="bindTimeChange" data-id="{{item.id}}">
+            <view class="time-picker">{{item.time}}</view>
+          </picker>
+          <view class="delete-btn" bindtap="deleteReminder" data-id="{{item.id}}">×</view>
+        </view>
+      </view>
+    </view>
+    <view class="tip-text" wx:if="{{forPartnerReminders.length === 0}}" style="padding: 16rpx 0;">点击上方"+ 添加"给TA设置提醒</view>
+  </view>
+
+  <!-- 添加提醒弹窗 -->
+  <view class="modal-mask" wx:if="{{showAddForm}}" bindtap="closeAddModal"></view>
+  <view class="modal-dialog" wx:if="{{showAddForm}}" catchtap="preventClose">
+    <view class="modal-header">
+      <text class="modal-title">{{addForPartner ? '给TA添加提醒' : '添加我的提醒'}}</text>
+      <view class="modal-close" bindtap="closeAddModal">×</view>
+    </view>
+    <view class="modal-body">
+      <view class="form-group">
+        <text class="form-label">提醒名称</text>
+        <input class="form-input" placeholder="如：吃药提醒" value="{{newReminder.name}}" bindinput="inputReminderName" />
+      </view>
+      <view class="form-group">
+        <text class="form-label">图标</text>
+        <view class="icon-selector" bindtap="toggleIconPicker">
+          <view class="icon-current">{{newReminder.icon}}</view>
+          <text class="icon-arrow">更换</text>
+        </view>
+        <view class="icon-picker" wx:if="{{showIconPicker}}">
+          <view class="icon-grid">
+            <view class="icon-option {{newReminder.icon === item ? 'selected' : ''}}" wx:for="{{iconList}}" wx:key="*this" bindtap="selectIcon" data-icon="{{item}}">{{item}}</view>
+          </view>
+        </view>
+      </view>
+      <view class="form-group">
+        <text class="form-label">提醒时间</text>
+        <picker mode="time" value="{{newReminder.time}}" bindchange="bindNewTimeChange">
+          <view class="form-input time-display">{{newReminder.time}}</view>
+        </picker>
+      </view>
+      <button class="btn btn-primary" bindtap="addReminder">添加提醒</button>
+    </view>
+  </view>
+
+  <view class="tip-card">
+    <text class="tip-text">开启提醒后，系统将在设定时间通过 PushPlus 推送微信通知。请先在「我的 → 消息推送」中配置 Token。</text>
+  </view>
+</view>
