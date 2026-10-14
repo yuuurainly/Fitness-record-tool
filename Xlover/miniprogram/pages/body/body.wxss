@@ -1,0 +1,52 @@
+.card-head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  margin-bottom: var(--gap-md);
+}
+
+.stat-row {
+  display: flex;
+}
+
+.stat {
+  flex: 1;
+}
+
+.stat-value {
+  font-size: 42rpx;
+  font-weight: 700;
+  line-height: 1.2;
+  display: flex;
+  align-items: baseline;
+}
+
+.stat-unit {
+  font-size: var(--fs-micro);
+  font-weight: 500;
+  color: var(--text-light);
+  margin-left: 4rpx;
+}
+
+.stat-label {
+  font-size: var(--fs-micro);
+  color: var(--text-light);
+  margin-top: 4rpx;
+}
+
+.impact {
+  font-size: var(--fs-cap);
+  color: var(--text-secondary);
+  padding: 10rpx 0;
+  border-bottom: 1rpx solid var(--border);
+}
+
+.impact:last-of-type {
+  border-bottom: none;
+}
+
+.meal-empty {
+  padding: 24rpx 0;
+  font-size: var(--fs-cap);
+  color: var(--text-light);
+}

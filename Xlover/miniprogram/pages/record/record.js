@@ -42,11 +42,12 @@ Page({
   },
 
   goFood() {
-    wx.navigateTo({ url: '/pages/food/food' })
+    // 饮食与训练现在都是 tab 页，必须用 switchTab
+    wx.switchTab({ url: '/pages/food/food' })
   },
 
   goExercise() {
-    wx.navigateTo({ url: '/pages/exercise/exercise' })
+    wx.switchTab({ url: '/pages/exercise/exercise' })
   },
 
   goWeight() {

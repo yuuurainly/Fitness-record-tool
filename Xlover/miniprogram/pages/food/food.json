@@ -1,4 +1,7 @@
 {
   "navigationBarTitleText": "饮食记录",
-  "usingComponents": {}
+  "usingComponents": {
+    "macro-bar": "/components/macro-bar/index",
+    "segmented": "/components/segmented/index"
+  }
 }

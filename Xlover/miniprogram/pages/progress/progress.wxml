@@ -1,207 +1,150 @@
 <view class="container">
-  <!-- 体重趋势（仅主角） -->
-  <view class="card" wx:if="{{userRole !== 'partner' && weightHistory.length > 0}}">
-    <view class="card-title">
-      <view class="card-title-icon"></view>
-      <text>体重趋势</text>
-    </view>
-    <view class="chart-container">
-      <canvas type="2d" id="progressWeightChart" style="width: 100%; height: 300rpx;"></canvas>
+
+  <view class="range">
+    <segmented options="{{rangeOptions}}" value="{{range}}" bind:change="onRange" />
+  </view>
+
+  <view class="card empty-all" wx:if="{{!hasAnyData}}">
+    <view class="empty-title">还没有可统计的数据</view>
+    <view class="empty-desc">记录一次饮食、训练或体重后，这里会显示趋势。</view>
+    <view class="empty-actions">
+      <view class="btn btn-secondary btn-sm" bindtap="goFood">去记饮食</view>
+      <view class="btn btn-secondary btn-sm" bindtap="goTraining">去记训练</view>
+      <view class="btn btn-secondary btn-sm" bindtap="goBody">去记体重</view>
     </view>
   </view>
 
-  <!-- 打卡日历（仅主角） -->
-  <view class="card" wx:if="{{userRole !== 'partner'}}">
-    <view class="card-title foldable" bindtap="toggleSection" data-key="expandCalendar">
-      <view class="card-title-icon"></view>
-      <text>打卡日历</text>
-      <text class="fold-arrow">{{expandCalendar ? '↑' : '↓'}}</text>
-    </view>
-    <view hidden="{{!expandCalendar}}">
-      <view class="calendar-header">
-        <view class="calendar-month">{{currentYear}}年{{currentMonth}}月</view>
-        <view class="calendar-nav">
-          <text bindtap="prevMonth">‹</text>
-          <text bindtap="nextMonth">›</text>
-        </view>
-      </view>
-      <view class="calendar-weekdays">
-        <text wx:for="{{weekdays}}" wx:key="*this">{{item}}</text>
-      </view>
-      <view class="calendar-days">
-        <view class="calendar-day {{item.empty ? 'empty' : ''}} {{item.checked ? 'checked' : ''}} {{item.today ? 'today' : ''}}" wx:for="{{calendarDays}}" wx:key="key">
-          <text>{{item.day || ''}}</text>
-          <view class="check-dot" wx:if="{{item.checked}}"></view>
-        </view>
-      </view>
-      <view class="calendar-legend">
-        <view class="legend-item">
-          <view class="legend-dot checked"></view>
-          <text>已打卡</text>
-        </view>
-        <view class="legend-item">
-          <view class="legend-dot today"></view>
-          <text>今天</text>
-        </view>
-      </view>
-    </view>
-  </view>
+  <block wx:if="{{hasAnyData}}">
 
-  <!-- 热量趋势（仅主角） -->
-  <view class="card" wx:if="{{userRole !== 'partner' && caloriesTrend.length > 0}}">
-    <view class="card-title foldable" bindtap="toggleSection" data-key="expandCalories">
-      <view class="card-title-icon"></view>
-      <text>热量摄入趋势 (7日)</text>
-      <text class="fold-arrow">{{expandCalories ? '↑' : '↓'}}</text>
-    </view>
-    <view hidden="{{!expandCalories}}">
-      <view class="trend-list">
-        <view class="trend-item" wx:for="{{caloriesTrend}}" wx:key="date">
-          <view class="trend-date">{{item.date}}</view>
-          <view class="trend-bar-container">
-            <view class="trend-bar" style="width: {{item.percent}}%"></view>
+    <!-- 体重趋势 -->
+    <view class="card">
+      <view class="card-head">
+        <text class="h2">体重趋势</text>
+        <text class="micro" wx:if="{{weight.hasData}}">近 {{weight.days}} 天 · kg</text>
+      </view>
+
+      <block wx:if="{{weight.hasEnough}}">
+        <view class="chart-summary">
+          <view class="cs-item">
+            <view class="cs-value num">{{weight.first}}</view>
+            <view class="cs-label">起始</view>
           </view>
-          <view class="trend-value">{{item.calories}}</view>
+          <view class="cs-item">
+            <view class="cs-value num">{{weight.last}}</view>
+            <view class="cs-label">最新</view>
+          </view>
+          <view class="cs-item">
+            <view class="cs-value num {{weight.delta > 0 ? 'up' : 'down'}}">{{weight.delta > 0 ? '+' : ''}}{{weight.delta}}</view>
+            <view class="cs-label">变化</view>
+          </view>
         </view>
-      </view>
-    </view>
-  </view>
+        <canvas type="2d" id="weightChart" class="chart"></canvas>
+      </block>
 
-  <!-- 运动统计（仅主角） -->
-  <view class="card" wx:if="{{userRole !== 'partner' && exerciseStats.length > 0}}">
-    <view class="card-title foldable" bindtap="toggleSection" data-key="expandExercise">
-      <view class="card-title-icon"></view>
-      <text>运动统计 (本周)</text>
-      <text class="fold-arrow">{{expandExercise ? '↑' : '↓'}}</text>
+      <view class="chart-empty" wx:elif="{{weight.hasData}}">只有 1 条体重记录，至少 2 条才能画出趋势。</view>
+      <view class="chart-empty" wx:else>这段时间没有体重记录。</view>
     </view>
-    <view hidden="{{!expandExercise}}">
-      <view class="stats-list">
-        <view class="stats-item" wx:for="{{exerciseStats}}" wx:key="type">
-          <view class="stats-icon">{{item.icon}}</view>
-          <view class="stats-info">
-            <view class="stats-name">{{item.name}}</view>
-            <view class="stats-bar-container">
-              <view class="stats-bar" style="width: {{item.percent}}%"></view>
+
+    <!-- 热量摄入 -->
+    <view class="card">
+      <view class="card-head">
+        <text class="h2">每日热量摄入</text>
+        <text class="micro" wx:if="{{intake.hasData}}">近 {{intake.days}} 天 · kcal</text>
+      </view>
+      <canvas type="2d" id="intakeChart" class="chart" wx:if="{{intake.hasData}}"></canvas>
+      <view class="chart-empty" wx:else>这段时间没有饮食记录。</view>
+      <view class="micro mt-16" wx:if="{{intake.hasData}}">虚线为当日目标；超出目标的柱子会标红。没有目标快照的日期不画目标线。</view>
+    </view>
+
+    <!-- 营养素完成度 -->
+    <view class="card">
+      <view class="card-head">
+        <text class="h2">营养素完成度</text>
+        <text class="micro">{{macroDateLabel}}</text>
+      </view>
+      <macro-bar
+        wx:for="{{macroToday}}"
+        wx:key="key"
+        label="{{item.label}}"
+        value="{{item.value}}"
+        target="{{item.target}}"
+        unit="{{item.unit}}"
+        color="{{item.color}}"
+      />
+
+      <block wx:if="{{macro.hasData}}">
+        <view class="divider"></view>
+        <view class="subhead">近 {{macro.days}} 天达标情况</view>
+        <view class="macro-hist">
+          <view class="macro-hist-row" wx:for="{{macro.points}}" wx:key="date">
+            <text class="mh-date">{{item.label}}</text>
+            <view class="mh-bars" wx:if="{{item.percent}}">
+              <view class="mh-bar"><view class="mh-fill" style="width: {{item.percent.carb > 100 ? 100 : item.percent.carb}}%; background: var(--macro-carb)"></view></view>
+              <view class="mh-bar"><view class="mh-fill" style="width: {{item.percent.protein > 100 ? 100 : item.percent.protein}}%; background: var(--macro-protein)"></view></view>
+              <view class="mh-bar"><view class="mh-fill" style="width: {{item.percent.fat > 100 ? 100 : item.percent.fat}}%; background: var(--macro-fat)"></view></view>
             </view>
+            <text class="mh-empty" wx:else>无数据</text>
           </view>
-          <view class="stats-value">{{item.duration}} min</view>
         </view>
-      </view>
-    </view>
-  </view>
-
-  <!-- 任务统计（伴侣视角） -->
-  <block wx:if="{{userRole === 'partner'}}">
-    <view class="card">
-      <view class="card-title">
-        <view class="card-title-icon"></view>
-        <text>任务总览</text>
-      </view>
-      <view class="task-stats-grid">
-        <view class="task-stat-item">
-          <view class="task-stat-value">{{taskStats.totalTasks}}</view>
-          <view class="task-stat-label">总任务数</view>
-        </view>
-        <view class="task-stat-item">
-          <view class="task-stat-value">{{taskStats.completedTasks}}</view>
-          <view class="task-stat-label">已完成</view>
-        </view>
-        <view class="task-stat-item">
-          <view class="task-stat-value">{{taskStats.activeTasks}}</view>
-          <view class="task-stat-label">进行中</view>
-        </view>
-        <view class="task-stat-item">
-          <view class="task-stat-value">{{taskStats.pendingTasks}}</view>
-          <view class="task-stat-label">待接受</view>
-        </view>
-      </view>
-      <view class="task-rate-bar">
-        <view class="task-rate-label">完成率</view>
-        <view class="task-rate-track">
-          <view class="task-rate-fill" style="width: {{taskStats.completionRate}}%"></view>
-        </view>
-        <view class="task-rate-value">{{taskStats.completionRate}}%</view>
-      </view>
+        <view class="micro">「无数据」表示当天记录缺少营养素（多为历史导入），不计为 0。</view>
+      </block>
     </view>
 
+    <!-- 训练时长 -->
     <view class="card">
-      <view class="card-title">
-        <view class="card-title-icon"></view>
-        <text>积分统计</text>
+      <view class="card-head">
+        <text class="h2">训练时长</text>
+        <text class="micro" wx:if="{{training.hasData}}">近 {{training.days}} 天 · 分钟</text>
       </view>
-      <view class="points-summary">
-        <view class="points-main">
-          <view class="points-number {{userRole === 'partner' ? 'clickable' : ''}}" bindtap="{{userRole === 'partner' ? 'editMainPoints' : ''}}">{{taskStats.totalPoints}}</view>
-          <view class="points-label">总积分</view>
+      <block wx:if="{{training.hasData}}">
+        <view class="chart-summary">
+          <view class="cs-item">
+            <view class="cs-value num">{{training.totalMinutes}}</view>
+            <view class="cs-label">总分钟</view>
+          </view>
+          <view class="cs-item">
+            <view class="cs-value num">{{training.activeDays}}</view>
+            <view class="cs-label">训练天数</view>
+          </view>
+          <view class="cs-item">
+            <view class="cs-value num">{{training.avgWeeklyMinutes}}</view>
+            <view class="cs-label">周均分钟</view>
+          </view>
+        </view>
+        <view class="bar-list">
+          <view class="bar-row" wx:for="{{training.points}}" wx:key="date">
+            <text class="bar-date">{{item.label}}</text>
+            <view class="bar-track">
+              <view class="bar-fill" style="width: {{training.peakMinutes ? item.minutes * 100 / training.peakMinutes : 0}}%"></view>
+            </view>
+            <text class="bar-value num">{{item.minutes}}</text>
+          </view>
+        </view>
+      </block>
+      <view class="chart-empty" wx:else>这段时间没有训练记录。</view>
+    </view>
+
+    <!-- 历史目标与实际 -->
+    <view class="card">
+      <view class="card-head">
+        <text class="h2">历史目标与实际</text>
+        <text class="micro" wx:if="{{goals.hasData}}">最近 {{goals.rows.length}} 条</text>
+      </view>
+      <view class="goal-row" wx:for="{{goals.rows}}" wx:key="date">
+        <view class="goal-date">
+          <text>{{item.date}}</text>
+          <text class="micro">{{item.goal}} · {{item.mode}}</text>
+        </view>
+        <view class="goal-nums num">
+          <text wx:if="{{item.actualKcal !== null}}">{{item.actualKcal}} / {{item.targetKcal}} kcal</text>
+          <text wx:else class="muted">目标 {{item.targetKcal}} kcal · 当日无进食记录</text>
+        </view>
+        <view class="goal-diff num" wx:if="{{item.diffKcal !== null}}">
+          <text class="{{item.diffKcal > 0 ? 'up' : 'down'}}">{{item.diffKcal > 0 ? '+' : ''}}{{item.diffKcal}}</text>
         </view>
       </view>
+      <view class="chart-empty" wx:if="{{goals.rows.length === 0}}">还没有目标快照记录。</view>
     </view>
+
   </block>
-
-  <!-- 任务统计（主角视角，在徽章上方） -->
-  <block wx:if="{{userRole !== 'partner'}}">
-    <view class="card">
-      <view class="card-title">
-        <view class="card-title-icon"></view>
-        <text>任务统计</text>
-      </view>
-      <view class="task-stats-grid">
-        <view class="task-stat-item">
-          <view class="task-stat-value">{{taskStats.totalTasks}}</view>
-          <view class="task-stat-label">总任务数</view>
-        </view>
-        <view class="task-stat-item">
-          <view class="task-stat-value">{{taskStats.completedTasks}}</view>
-          <view class="task-stat-label">已完成</view>
-        </view>
-        <view class="task-stat-item">
-          <view class="task-stat-value">{{taskStats.activeTasks}}</view>
-          <view class="task-stat-label">进行中</view>
-        </view>
-        <view class="task-stat-item">
-          <view class="task-stat-value">{{taskStats.totalPoints}}</view>
-          <view class="task-stat-label">总积分</view>
-        </view>
-      </view>
-    </view>
-  </block>
-
-  <!-- 成就徽章（置底，仅主角） -->
-  <view class="card" wx:if="{{userRole !== 'partner'}}">
-    <view class="card-title foldable" bindtap="toggleSection" data-key="expandBadges">
-      <view class="card-title-icon"></view>
-      <text>成就徽章</text>
-      <text class="fold-arrow">{{expandBadges ? '↑' : '↓'}}</text>
-    </view>
-    <view hidden="{{!expandBadges}}">
-      <view class="badge-grid">
-        <view class="badge-item {{item.unlocked ? 'unlocked' : 'locked'}}" wx:for="{{badges}}" wx:key="id">
-          <view class="badge-icon">{{item.icon}}</view>
-          <view class="badge-name">{{item.name}}</view>
-          <view class="badge-desc">{{item.desc}}</view>
-        </view>
-      </view>
-    </view>
-  </view>
-
-  <!-- 伴侣修改积分弹窗 -->
-  <view class="modal" wx:if="{{showPointsModal}}">
-    <view class="modal-mask" bindtap="closePointsModal"></view>
-    <view class="modal-content points-modal">
-      <view class="points-modal-title">调整积分</view>
-      <view class="points-modal-current">当前总积分：<text class="points-modal-value">{{taskStats.totalPoints}}</text></view>
-      <view class="form-group">
-        <text class="form-label">调整数量（正数=增加，负数=减少）</text>
-        <input class="form-input" type="text" placeholder="如：10 或 -5" value="{{pointsDelta}}" bindinput="inputPointsDelta" />
-      </view>
-      <view class="form-group">
-        <text class="form-label">调整原因</text>
-        <input class="form-input" placeholder="如：额外奖励" value="{{pointsReason}}" bindinput="inputPointsReason" />
-      </view>
-      <view class="modal-actions">
-        <button class="btn btn-secondary" bindtap="closePointsModal">取消</button>
-        <button class="btn btn-primary" bindtap="savePointsAdjust">确认调整</button>
-      </view>
-    </view>
-  </view>
 </view>

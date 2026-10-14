@@ -1,105 +1,167 @@
 <view class="container">
-  <!-- 今日热量概览 -->
-  <view class="card calories-overview">
-    <view class="calories-circle">
-      <view class="calories-number">{{todayCalories}}</view>
-      <view class="calories-unit">kcal / {{targetCalories}}</view>
-    </view>
-    <view class="calories-status {{caloriesStatus}}">
-      {{caloriesStatus === 'over' ? '已超标' : '剩余 ' + (targetCalories - todayCalories) + ' kcal'}}
-    </view>
-  </view>
 
-  <!-- 搜索食物 -->
-  <view class="search-bar">
-    <input type="text" placeholder="搜索食物名称..." value="{{searchKey}}" bindinput="onSearch" />
-    <text class="search-icon">🔍</text>
-  </view>
-
-  <!-- 食物列表 -->
-  <view class="card" wx:if="{{foodList.length > 0}}">
-    <view class="food-list">
-      <view class="food-item" wx:for="{{foodList}}" wx:key="_id" wx:for-index="idx" wx:if="{{idx < showFoodList}}" bindtap="selectFood" data-item="{{item}}">
-        <view class="food-info">
-          <view class="food-name">{{item.name}}</view>
-          <view class="food-calories">{{item.calories}} kcal / 100g</view>
-        </view>
-        <view class="food-add">+</view>
-      </view>
-    </view>
-    <view class="expand-btn" bindtap="toggleFoodList">
-      <text>{{expandFoodList ? '收起 ↑' : '查看更多 (' + (foodList.length - 3) + ') ↓'}}</text>
-    </view>
-  </view>
-
-  <!-- 自定义食物 -->
+  <!-- 今日摄入概览 -->
   <view class="card">
-    <view class="card-title foldable" bindtap="toggleCustom">
-      <view class="card-title-icon"></view>
-      <text>自定义食物</text>
-      <text class="fold-arrow">{{expandCustom ? '↑' : '↓'}}</text>
+    <view class="sum">
+      <view>
+        <view class="sum-value num">
+          {{intake.kcal}}<text class="sum-unit">kcal</text>
+        </view>
+        <view class="sum-cap num" wx:if="{{targets}}">目标 {{targets.kcal}} · {{overBudget ? '超出' : '剩余'}} {{overBudget ? -remainingKcal : remainingKcal}}</view>
+        <view class="sum-cap" wx:else>尚未设定目标</view>
+      </view>
+      <view class="sum-tag">
+        <text class="chip {{targetSource === 'snapshot' ? 'chip-measured' : 'chip-missing'}}" wx:if="{{targets}}">
+          {{targetSource === 'snapshot' ? '今日目标已冻结' : '按当前计划推算'}}
+        </text>
+      </view>
     </view>
-    <view hidden="{{!expandCustom}}">
-      <view class="form-group">
-        <text class="form-label">食物名称</text>
-        <input type="text" placeholder="请输入食物名称" value="{{customFood.name}}" bindinput="inputCustomName" />
-      </view>
-      <view class="form-group">
-        <text class="form-label">热量 (kcal/100g)</text>
-        <input type="digit" placeholder="请输入热量" value="{{customFood.calories}}" bindinput="inputCustomCalories" />
-      </view>
-      <view class="form-group">
-        <text class="form-label">摄入量 (g)</text>
-        <input type="digit" placeholder="请输入摄入量" value="{{customFood.amount}}" bindinput="inputCustomAmount" cursor-spacing="{{120}}" />
-      </view>
-      <view class="form-group">
-        <text class="form-label">餐次</text>
-        <picker mode="selector" range="{{meals}}" value="{{mealIndex}}" bindchange="bindMealChange">
-          <view class="picker-value">{{meals[mealIndex]}}</view>
-        </picker>
-      </view>
-      <button class="btn btn-primary {{!customFood.name || !customFood.calories || !customFood.amount ? 'btn-disabled' : ''}}" bindtap="addCustomFood">添加记录</button>
+
+    <view class="divider"></view>
+
+    <macro-bar
+      wx:for="{{macroRows}}"
+      wx:key="key"
+      label="{{item.label}}"
+      value="{{item.value}}"
+      target="{{item.target}}"
+      unit="{{item.unit}}"
+      color="{{item.color}}"
+    />
+
+    <view class="micro" wx:if="{{!intake.macrosComplete && intake.entries > 0}}">
+      有 {{intake.missingMacroEntries}} 条记录缺少营养素数据（多为历史导入），未计入营养素合计
     </view>
   </view>
 
-  <!-- 今日饮食记录 -->
-  <view class="card" wx:if="{{todayFoodLogs.length > 0}}">
-    <view class="card-title">
-      <view class="card-title-icon"></view>
-      <text>今日记录</text>
+  <!-- 餐次列表 -->
+  <view class="card" wx:for="{{meals}}" wx:key="key" wx:for-item="meal">
+    <view class="meal-head">
+      <text class="h2">{{meal.label}}</text>
+      <text class="meal-kcal num">{{meal.kcal}} kcal</text>
     </view>
-    <view class="food-log-list">
-      <view class="food-log-item" wx:for="{{todayFoodLogs}}" wx:key="_id">
-        <view class="food-log-info">
-          <view class="food-log-name">{{item.name}}</view>
-          <view class="food-log-detail">{{item.amount}}g · {{item.meal}}</view>
+
+    <view
+      class="list-item"
+      wx:for="{{meal.items}}"
+      wx:key="id"
+      wx:for-item="log"
+      data-id="{{log.id}}"
+      bindtap="tapItem"
+    >
+      <view class="list-main">
+        <view class="list-title">{{log.name}}</view>
+        <view class="list-desc num">
+          {{log.grams}}g
+          <text wx:if="{{log.macroMissing}}"> · 营养素数据缺失</text>
+          <text wx:else> · 碳{{log.carb}} 蛋{{log.protein}} 脂{{log.fat}}</text>
         </view>
-        <view class="food-log-calories">{{item.totalCalories}} kcal</view>
-        <view class="food-log-delete" bindtap="deleteFoodLog" data-id="{{item._id}}">✕</view>
       </view>
+      <view class="list-tail num">{{log.kcal === null ? '--' : log.kcal}}<text class="unit-sm">kcal</text></view>
     </view>
+
+    <view class="meal-empty" wx:if="{{meal.items.length === 0}}">还没有记录</view>
+
+    <view class="meal-add" data-meal="{{meal.key}}" bindtap="openAdd">+ 添加{{meal.label}}</view>
   </view>
+
+  <view class="container-pad"></view>
 </view>
 
-<!-- 选择食物弹窗 -->
-<view class="modal" wx:if="{{showModal}}">
-  <view class="modal-mask" bindtap="closeModal"></view>
-  <view class="modal-content">
-    <view class="modal-title">{{selectedFood.name}}</view>
-    <view class="modal-info">{{selectedFood.calories}} kcal / 100g</view>
-    <view class="form-group">
-      <text class="form-label">摄入量 (g)</text>
-      <input type="digit" placeholder="请输入摄入量" value="{{inputAmount}}" bindinput="inputAmount" cursor-spacing="{{120}}" />
-    </view>
-    <view class="form-group">
-      <text class="form-label">餐次</text>
-      <picker mode="selector" range="{{meals}}" value="{{mealIndex}}" bindchange="bindMealChange">
-        <view class="picker-value">{{meals[mealIndex]}}</view>
-      </picker>
-    </view>
-    <view class="modal-actions">
-      <button class="btn btn-secondary" bindtap="closeModal">取消</button>
-      <button class="btn btn-primary" bindtap="confirmAddFood">确认</button>
-    </view>
+<!-- ==================== 添加 / 编辑面板 ==================== -->
+<view class="mask" wx:if="{{sheet.open}}" bindtap="closeSheet"></view>
+<view class="sheet" wx:if="{{sheet.open}}">
+
+  <view class="sheet-head">
+    <text class="h2">{{sheet.mode === 'edit' ? '编辑记录' : '添加食物'}}</text>
+    <text class="sheet-close" bindtap="closeSheet">关闭</text>
   </view>
+
+  <scroll-view scroll-y class="sheet-body">
+
+    <!-- 已有选中食物：直接改重量 -->
+    <block wx:if="{{!showResults && sheet.foodName}}">
+      <view class="picked">
+        <view class="picked-head">
+          <view class="picked-name">{{sheet.foodName}}</view>
+          <text class="picked-change" bindtap="backToSearch" wx:if="{{sheet.mode === 'add'}}">重新选择</text>
+        </view>
+        <view class="micro" wx:if="{{sheet.per100}}">
+          每 100g：{{sheet.per100.kcal}} kcal
+          <text wx:if="{{sheet.per100.protein !== null}}"> · 碳{{sheet.per100.carb}} 蛋{{sheet.per100.protein}} 脂{{sheet.per100.fat}}</text>
+        </view>
+        <view class="micro" wx:else>该记录没有每 100g 数据，将按原记录等比例换算</view>
+      </view>
+
+      <view class="field">
+        <view class="field-label"><text>重量（克）</text></view>
+        <input type="digit" placeholder="例如 150" value="{{sheet.grams}}" bindinput="onGrams" />
+        <view class="preset-row">
+          <view
+            wx:for="{{gramPresets}}"
+            wx:key="*this"
+            class="preset"
+            data-grams="{{item}}"
+            bindtap="onGramPreset"
+          >{{item}}g</view>
+        </view>
+      </view>
+
+      <view class="preview" wx:if="{{sheet.preview}}">
+        <view class="preview-main num">{{sheet.preview.kcal}}<text class="unit-sm">kcal</text></view>
+        <view class="preview-macros num" wx:if="{{sheet.preview.protein !== null}}">
+          碳水 {{sheet.preview.carb}}g · 蛋白质 {{sheet.preview.protein}}g · 脂肪 {{sheet.preview.fat}}g
+        </view>
+        <view class="micro">按 {{sheet.preview.grams}}g 换算{{sheet.proportional ? '（等比例）' : ''}}</view>
+      </view>
+
+      <view class="field mt-24">
+        <view class="field-label"><text>餐次</text></view>
+        <segmented options="{{mealOptions}}" value="{{sheet.meal}}" bind:change="onSheetMeal" />
+      </view>
+
+      <view class="sheet-actions">
+        <view class="btn btn-ghost" bindtap="closeSheet">取消</view>
+        <view class="btn btn-primary" bindtap="confirmSheet">保存</view>
+      </view>
+    </block>
+
+    <!-- 搜索 -->
+    <block wx:else>
+      <view class="field">
+        <input placeholder="搜索食物，例如：鸡胸肉" value="{{keyword}}" bindinput="onKeyword" />
+      </view>
+
+      <scroll-view scroll-x class="chips">
+        <view
+          wx:for="{{categories}}"
+          wx:key="*this"
+          class="chip-item {{category === item ? 'active' : ''}}"
+          data-category="{{item}}"
+          bindtap="onCategory"
+        >{{item === '' ? '全部' : item}}</view>
+      </scroll-view>
+
+      <view class="results">
+        <view
+          class="list-item"
+          wx:for="{{results}}"
+          wx:key="id"
+          data-food="{{item}}"
+          bindtap="selectFood"
+        >
+          <view class="food-icon">{{item.icon}}</view>
+          <view class="list-main">
+            <view class="list-title">{{item.name}}</view>
+            <view class="list-desc num">每 100g · {{item.kcalPer100g}} kcal</view>
+          </view>
+          <view class="list-tail">
+            <text class="arrow">›</text>
+          </view>
+        </view>
+        <view class="meal-empty" wx:if="{{results.length === 0}}">没有匹配的食物</view>
+      </view>
+    </block>
+
+  </scroll-view>
 </view>

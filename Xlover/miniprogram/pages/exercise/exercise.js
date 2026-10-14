@@ -1,318 +1,259 @@
-const app = getApp()
-const util = require('../../utils/util.js')
+const appStore = require('../../utils/appStore.js')
+const metrics = require('../../utils/metrics.js')
+const fmt = require('../../utils/format.js')
+const nutrition = require('../../utils/nutrition.js')
+const planMod = require('../../utils/plan.js')
 
-const DEFAULT_TYPES = [
-  { type: 'running', name: '跑步', icon: '🏃', met: 9.8 },
-  { type: 'walking', name: '步行', icon: '🚶', met: 3.8 },
-  { type: 'cycling', name: '骑行', icon: '🚴', met: 7.5 },
-  { type: 'swimming', name: '游泳', icon: '🏊', met: 8.0 },
-  { type: 'yoga', name: '瑜伽', icon: '🧘', met: 2.5 },
-  { type: 'fitness', name: '健身', icon: '💪', met: 6.0 },
-  { type: 'rope', name: '跳绳', icon: '↕️', met: 10.0 },
-  { type: 'hiking', name: '登山', icon: '🥾', met: 6.5 }
+// 沿用原项目 exercise 页内置的运动类型与 MET 值
+const BUILTIN_TYPES = [
+  { key: 'running', name: '跑步', met: 9.8 },
+  { key: 'walking', name: '步行', met: 3.8 },
+  { key: 'cycling', name: '骑行', met: 7.5 },
+  { key: 'swimming', name: '游泳', met: 8.0 },
+  { key: 'yoga', name: '瑜伽', met: 2.5 },
+  { key: 'fitness', name: '健身', met: 6.0 },
+  { key: 'rope', name: '跳绳', met: 10.0 },
+  { key: 'hiking', name: '登山', met: 6.5 }
 ]
+
+const MINUTE_PRESETS = [20, 30, 45, 60, 90]
 
 Page({
   data: {
-    todayDuration: 0,
-    todayCalories: 0,
-    werunStep: 0,
-    werunCalories: 0,
-    totalCalories: 0,
-    exerciseTypes: [],
+    stats: { totalMinutes: 0, activeDays: 0, avgWeeklyMinutes: 0, avgWeeklyHours: 0, windowDays: 28 },
+    recommendation: null,
+
+    bands: [],
+    selectedBandId: '',
+    useCustom: false,
+    custom: { carb: '', protein: '', fat: '' },
+
+    types: [],
     selectedType: '',
-    duration: '',
-    estimatedCalories: 0,
-    todayExercises: [],
-    userWeight: 50,
-    showAddType: false,
-    customTypeName: '',
-    customTypeMet: '',
-    expandTypes: false,
-    showPointModal: false,
-    pointExerciseId: '',
-    pointExerciseName: '',
-    pointValue: ''
+    minutePresets: MINUTE_PRESETS,
+    form: { date: '', minutes: '' },
+    kcalPreview: null,
+
+    history: [],
+    planSaving: false
   },
 
-  onShow() {
-    this.loadCustomTypes()
-    this.loadExercises()
-    this.loadUserWeight()
-    this.autoSyncWeRun()
+  onLoad () {
+    this.setData({
+      bands: nutrition.listCoefficientBands(),
+      types: BUILTIN_TYPES.slice(),
+      'form.date': fmt.today()
+    })
   },
 
-  loadCustomTypes() {
-    const custom = wx.getStorageSync('customExerciseTypes') || []
-    const merged = [...DEFAULT_TYPES, ...custom]
-    this.setData({ exerciseTypes: merged })
-  },
-
-  async loadExercises() {
-    try {
-      const res = await wx.cloud.callFunction({
-        name: 'getUserData',
-        data: { type: 'getExercises' }
-      })
-
-      if (res.result) {
-        const exercises = res.result.exercises || []
-        const duration = exercises.reduce((sum, item) => sum + (item.duration || 0), 0)
-        const calories = exercises.reduce((sum, item) => sum + (item.calories || 0), 0)
-        const werunStep = wx.getStorageSync('todayWeRunSteps') || 0
-        const werunCalories = Math.round(werunStep * 0.04)
-        this.setData({
-          todayDuration: duration,
-          todayCalories: calories,
-          werunStep,
-          werunCalories,
-          totalCalories: calories + werunCalories,
-          todayExercises: exercises
-        })
-      }
-    } catch (err) {
-      console.error('加载运动记录失败', err)
+  onShow () {
+    if (typeof this.getTabBar === 'function' && this.getTabBar()) {
+      this.getTabBar().setData({ selected: 2 })
     }
+    this.refresh()
   },
 
-  async loadUserWeight() {
-    try {
-      const res = await wx.cloud.callFunction({
-        name: 'getUserData',
-        data: { type: 'getLatestWeight' }
-      })
-      if (res.result && res.result.weight) {
-        this.setData({ userWeight: res.result.weight })
-      }
-    } catch (err) {
-      console.error('加载体重失败', err)
-    }
-  },
+  refresh () {
+    const store = appStore.getStore()
+    const today = fmt.today()
 
-  autoSyncWeRun() {
-    const today = util.getToday()
-    const lastSync = wx.getStorageSync('lastWeRunSyncDate')
-    if (lastSync === today) {
-      const steps = wx.getStorageSync('todayWeRunSteps') || 0
-      this.setData({ werunStep: steps, werunCalories: Math.round(steps * 0.04) })
-      this.updateTotalCalories()
-      return
-    }
+    const series = metrics.getTrainingSeries(store, { days: nutrition.WINDOW_DAYS, today })
+    const recommendation = metrics.getTrainingRecommendation(store, { today })
 
-    wx.getWeRunData({
-      success: (res) => {
-        wx.cloud.callFunction({
-          name: 'updateData',
-          data: {
-            type: 'syncWeRun',
-            encryptedData: res.encryptedData,
-            iv: res.iv
-          }
-        }).then(res2 => {
-          const steps = res2.result?.steps || 0
-          wx.setStorageSync('todayWeRunSteps', steps)
-          wx.setStorageSync('lastWeRunSyncDate', today)
-          this.setData({
-            werunStep: steps,
-            werunCalories: Math.round(steps * 0.04)
-          })
-          this.updateTotalCalories()
-        }).catch(() => {
-          console.log('步数同步失败')
-        })
+    const savedPlan = planMod.normalizePlan(store.getNutritionPlan(), store.getProfile())
+    const settings = store.getSettings() || {}
+    const customExercises = Array.isArray(settings.customExercises) ? settings.customExercises : []
+
+    const logs = store.getWorkoutLogs()
+      .slice()
+      .sort((a, b) => (a.date === b.date ? (a.createdAt < b.createdAt ? 1 : -1) : (a.date < b.date ? 1 : -1)))
+      .slice(0, 20)
+      .map(l => ({
+        id: l.id,
+        date: l.date,
+        label: fmt.relativeDay(l.date, today),
+        typeName: l.typeName,
+        minutes: l.minutes,
+        kcal: l.kcal
+      }))
+
+    this.setData({
+      stats: {
+        totalMinutes: series.totalMinutes,
+        activeDays: series.activeDays,
+        avgWeeklyMinutes: series.avgWeeklyMinutes,
+        avgWeeklyHours: fmt.round1(series.totalMinutes / 60 / (nutrition.WINDOW_DAYS / 7)),
+        windowDays: nutrition.WINDOW_DAYS
       },
-      fail: () => {
-        console.log('未授权微信运动')
-      }
-    })
-  },
-
-  updateTotalCalories() {
-    this.setData({
-      totalCalories: this.data.todayCalories + this.data.werunCalories
-    })
-  },
-
-  selectType(e) {
-    const type = e.currentTarget.dataset.type
-    this.setData({ selectedType: type })
-    this.calculateCalories()
-  },
-
-  inputDuration(e) {
-    const duration = e.detail.value
-    this.setData({ duration })
-    this.calculateCalories()
-  },
-
-  calculateCalories() {
-    const { selectedType, duration, userWeight, exerciseTypes } = this.data
-    if (selectedType && duration) {
-      const typeInfo = exerciseTypes.find(t => t.type === selectedType)
-      const met = typeInfo?.met || 4.0
-      const calories = Math.round(met * userWeight * (parseFloat(duration) / 60))
-      this.setData({ estimatedCalories: calories })
-    }
-  },
-
-  addExercise() {
-    const { selectedType, duration, estimatedCalories, exerciseTypes } = this.data
-    if (!selectedType || !duration) {
-      wx.showToast({ title: '请填写完整信息', icon: 'none' })
-      return
-    }
-
-    const typeInfo = exerciseTypes.find(t => t.type === selectedType)
-
-    wx.showLoading({ title: '添加中...' })
-    
-    wx.cloud.callFunction({
-      name: 'updateData',
-      data: {
-        type: 'addExercise',
-        exerciseType: selectedType,
-        typeName: typeInfo.name,
-        icon: typeInfo.icon,
-        duration: parseFloat(duration),
-        calories: estimatedCalories
-      }
-    }).then(() => {
-      wx.hideLoading()
-      this.setData({
-        selectedType: '',
-        duration: '',
-        estimatedCalories: 0
-      })
-      this.loadExercises()
-      wx.showToast({ title: '添加成功', icon: 'success' })
-    }).catch(err => {
-      wx.hideLoading()
-      wx.showToast({ title: '添加失败', icon: 'none' })
-    })
-  },
-
-  toggleTypes() {
-    this.setData({ expandTypes: !this.data.expandTypes })
-  },
-
-  showAddTypeModal() {
-    this.setData({ showAddType: true, customTypeName: '', customTypeMet: '' })
-  },
-
-  closeAddTypeModal() {
-    this.setData({ showAddType: false })
-  },
-
-  inputCustomTypeName(e) {
-    this.setData({ customTypeName: e.detail.value })
-  },
-
-  inputCustomTypeMet(e) {
-    this.setData({ customTypeMet: e.detail.value })
-  },
-
-  saveCustomType() {
-    const { customTypeName, customTypeMet } = this.data
-    if (!customTypeName || !customTypeMet) {
-      wx.showToast({ title: '请填写完整', icon: 'none' })
-      return
-    }
-    const met = parseFloat(customTypeMet)
-    if (isNaN(met) || met <= 0) {
-      wx.showToast({ title: 'MET值无效', icon: 'none' })
-      return
-    }
-    const custom = wx.getStorageSync('customExerciseTypes') || []
-    const newType = {
-      type: 'custom_' + Date.now(),
-      name: customTypeName,
-      icon: '⭐',
-      met
-    }
-    custom.push(newType)
-    wx.setStorageSync('customExerciseTypes', custom)
-    this.loadCustomTypes()
-    this.setData({ showAddType: false })
-    wx.showToast({ title: '添加成功', icon: 'success' })
-  },
-
-  deleteCustomType(e) {
-    const type = e.currentTarget.dataset.type
-    if (!type.startsWith('custom_')) {
-      wx.showToast({ title: '默认类型不可删除', icon: 'none' })
-      return
-    }
-    let custom = wx.getStorageSync('customExerciseTypes') || []
-    custom = custom.filter(t => t.type !== type)
-    wx.setStorageSync('customExerciseTypes', custom)
-    this.loadCustomTypes()
-    if (this.data.selectedType === type) {
-      this.setData({ selectedType: '', estimatedCalories: 0 })
-    }
-  },
-
-  deleteExercise(e) {
-    const id = e.currentTarget.dataset.id
-    wx.showModal({
-      title: '确认删除',
-      content: '确定删除这条记录吗？',
-      success: (res) => {
-        if (res.confirm) {
-          wx.cloud.callFunction({
-            name: 'updateData',
-            data: { type: 'deleteExercise', id }
-          }).then(() => {
-            this.loadExercises()
-          })
+      recommendation,
+      selectedBandId: savedPlan.bandId || '',
+      useCustom: savedPlan.bandId === 'custom',
+      custom: savedPlan.customCoefficients
+        ? {
+          carb: String(savedPlan.customCoefficients.carb),
+          protein: String(savedPlan.customCoefficients.protein),
+          fat: String(savedPlan.customCoefficients.fat)
         }
-      }
+        : { carb: '', protein: '', fat: '' },
+      types: BUILTIN_TYPES.concat(customExercises),
+      history: logs
     })
   },
 
-  // 打开积分申请弹窗
-  openPointModal(e) {
-    const id = e.currentTarget.dataset.id
-    const name = e.currentTarget.dataset.name
-    this.setData({
-      showPointModal: true,
-      pointExerciseId: id,
-      pointExerciseName: name,
-      pointValue: ''
-    })
+  /* ---------------- 档位设置 ---------------- */
+
+  adoptRecommendation () {
+    const rec = this.data.recommendation
+    if (!rec || !rec.bandId) return
+    this.savePlanPatch({ bandId: rec.bandId, customCoefficients: null }, `已采用「${rec.bandLabel}」`)
   },
 
-  closePointModal() {
-    this.setData({ showPointModal: false })
+  selectBand (e) {
+    const bandId = e.currentTarget.dataset.band
+    this.savePlanPatch({ bandId, customCoefficients: null }, '档位已更新')
   },
 
-  inputPointValue(e) {
-    this.setData({ pointValue: e.detail.value })
+  toggleCustom () {
+    const next = !this.data.useCustom
+    this.setData({ useCustom: next })
+    if (!next) {
+      const fallback = this.data.selectedBandId && this.data.selectedBandId !== 'custom'
+        ? this.data.selectedBandId
+        : nutrition.COEFFICIENT_BANDS[0].id
+      this.savePlanPatch({ bandId: fallback, customCoefficients: null }, '已切回档位系数')
+    }
   },
 
-  submitPointRequest() {
-    const { pointExerciseId, pointExerciseName, pointValue } = this.data
-    const points = parseInt(pointValue)
-    if (!points || points <= 0) {
-      wx.showToast({ title: '请输入有效积分值', icon: 'none' })
+  onCustomInput (e) {
+    const key = e.currentTarget.dataset.key
+    this.setData({ [`custom.${key}`]: e.detail.value })
+  },
+
+  saveCustom () {
+    const c = this.data.custom
+    const custom = { carb: c.carb, protein: c.protein, fat: c.fat }
+    this.savePlanPatch({ bandId: 'custom', customCoefficients: custom }, '自定义系数已保存')
+  },
+
+  savePlanPatch (patch, successText) {
+    const store = appStore.getStore()
+    const profile = store.getProfile()
+    if (!profile) {
+      wx.showToast({ title: '请先填写身体资料', icon: 'none' })
       return
     }
 
-    wx.showLoading({ title: '提交中...' })
-    wx.cloud.callFunction({
-      name: 'updateData',
-      data: {
-        type: 'requestExercisePoints',
-        exerciseId: pointExerciseId,
-        exerciseName: pointExerciseName,
-        points: points
+    const merged = planMod.normalizePlan(
+      Object.assign({}, store.getNutritionPlan() || {}, patch),
+      profile
+    )
+    const res = store.saveNutritionPlan(Object.assign({}, merged, { weightKg: profile.weightKg }))
+    if (!res.ok) {
+      wx.showModal({ title: '保存失败', content: res.errors.join('；'), showCancel: false })
+      return
+    }
+
+    // 主动修改计划后刷新「今天」的目标快照；历史日期不动
+    metrics.refreshTodaySnapshot(store, { today: fmt.today(), source: 'training-page' })
+    this.refresh()
+    wx.showToast({ title: successText || '已保存', icon: 'success' })
+  },
+
+  /* ---------------- 记录训练 ---------------- */
+
+  selectType (e) {
+    this.setData({ selectedType: e.currentTarget.dataset.key })
+    this.updateKcal()
+  },
+
+  onDate (e) {
+    this.setData({ 'form.date': e.detail.value })
+  },
+
+  onMinutes (e) {
+    this.setData({ 'form.minutes': e.detail.value })
+    this.updateKcal()
+  },
+
+  onMinutePreset (e) {
+    this.setData({ 'form.minutes': String(e.currentTarget.dataset.minutes) })
+    this.updateKcal()
+  },
+
+  updateKcal () {
+    const store = appStore.getStore()
+    const profile = store.getProfile()
+    const type = this.data.types.find(t => t.key === this.data.selectedType)
+    const minutes = parseFloat(this.data.form.minutes)
+
+    if (!profile || !profile.weightKg || !type || !minutes) {
+      this.setData({ kcalPreview: null })
+      return
+    }
+
+    const res = nutrition.estimateTrainingCalories({
+      metValue: type.met,
+      weightKg: profile.weightKg,
+      workoutMinutes: minutes
+    })
+    this.setData({
+      kcalPreview: res.ok ? { kcal: res.value, weightKg: profile.weightKg, met: type.met } : null
+    })
+  },
+
+  saveTraining () {
+    const { selectedType, form, types, kcalPreview } = this.data
+    const type = types.find(t => t.key === selectedType)
+    const minutes = parseFloat(form.minutes)
+
+    if (!type) {
+      wx.showToast({ title: '请选择训练类型', icon: 'none' })
+      return
+    }
+    if (!minutes || minutes <= 0) {
+      wx.showToast({ title: '请输入训练时长', icon: 'none' })
+      return
+    }
+    if (form.date > fmt.today()) {
+      wx.showToast({ title: '不能记录未来的训练', icon: 'none' })
+      return
+    }
+
+    const res = appStore.getStore().addWorkoutLog({
+      date: form.date,
+      typeKey: type.key,
+      typeName: type.name,
+      minutes,
+      metValue: type.met,
+      kcal: kcalPreview ? kcalPreview.kcal : null,
+      source: 'local'
+    })
+
+    if (!res.ok) {
+      wx.showModal({ title: '保存失败', content: res.errors.join('；'), showCancel: false })
+      return
+    }
+
+    this.setData({ selectedType: '', 'form.minutes': '', kcalPreview: null })
+    this.refresh()
+    wx.showToast({ title: '已记录', icon: 'success' })
+  },
+
+  tapHistory (e) {
+    const id = e.currentTarget.dataset.id
+    const item = this.data.history.find(h => h.id === id)
+    if (!item) return
+    wx.showModal({
+      title: '删除训练记录',
+      content: `确定删除 ${item.label} 的「${item.typeName} ${item.minutes}分钟」吗？`,
+      confirmText: '删除',
+      confirmColor: '#E85D5D',
+      success: res => {
+        if (!res.confirm) return
+        appStore.getStore().removeWorkoutLog(id)
+        this.refresh()
+        wx.showToast({ title: '已删除', icon: 'success' })
       }
-    }).then(() => {
-      wx.hideLoading()
-      this.setData({ showPointModal: false })
-      wx.showToast({ title: '申请已提交', icon: 'success' })
-    }).catch(err => {
-      wx.hideLoading()
-      wx.showToast({ title: err.result?.error || '申请失败', icon: 'none' })
     })
   }
 })

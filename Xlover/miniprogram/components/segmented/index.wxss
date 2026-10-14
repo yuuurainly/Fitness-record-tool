@@ -1,0 +1,27 @@
+.segmented {
+  display: flex;
+  background: var(--track);
+  border-radius: var(--radius-pill);
+  padding: 4rpx;
+}
+
+.segmented.is-disabled {
+  opacity: 0.5;
+}
+
+.seg {
+  flex: 1;
+  text-align: center;
+  padding: 14rpx 0;
+  font-size: var(--fs-cap);
+  color: var(--text-secondary);
+  border-radius: var(--radius-pill);
+  transition: all 0.2s;
+}
+
+.seg.active {
+  background: #fff;
+  color: var(--text-primary);
+  font-weight: 600;
+  box-shadow: 0 1rpx 4rpx rgba(0, 0, 0, 0.06);
+}

@@ -1,0 +1,174 @@
+<view class="container has-action-bar">
+
+  <view class="notice notice-warn" wx:if="{{!ready}}">
+    {{message}}
+    <view class="notice-action" bindtap="goTraining">去填写身体资料 ›</view>
+  </view>
+
+  <block wx:if="{{ready}}">
+
+    <!-- 目标 -->
+    <view class="card">
+      <view class="card-head">
+        <text class="h2">目标</text>
+        <text class="chip chip-warn" wx:if="{{dirty}}">有未保存的修改</text>
+      </view>
+      <segmented options="{{goalOptions}}" value="{{draft.goalType}}" bind:change="onGoalChange" />
+      <view class="field-hint">切换目标会先给出新旧对比，确认后才应用；只影响今天及以后。</view>
+    </view>
+
+    <!-- 能量 -->
+    <view class="card" wx:if="{{preview.ok}}">
+      <view class="card-head">
+        <text class="h2">能量</text>
+        <text class="chip chip-estimated">公式估算</text>
+      </view>
+
+      <view class="energy">
+        <view class="energy-item">
+          <view class="energy-value num">{{preview.bmr.value}}</view>
+          <view class="energy-label">BMR</view>
+        </view>
+        <view class="energy-item">
+          <view class="energy-value num">{{preview.tdee.value}}</view>
+          <view class="energy-label">TDEE</view>
+        </view>
+        <view class="energy-item highlight">
+          <view class="energy-value num">{{preview.target.value}}</view>
+          <view class="energy-label">目标热量</view>
+        </view>
+      </view>
+
+      <view class="divider"></view>
+
+      <view class="field">
+        <view class="field-label">
+          <text>目标热量调整</text>
+          <text class="num adjust-value">{{adjustPercent > 0 ? '+' : ''}}{{adjustPercent}}%（{{preview.target.raw}} kcal）</text>
+        </view>
+        <slider
+          min="{{adjustRange.min}}"
+          max="{{adjustRange.max}}"
+          step="{{adjustRange.step}}"
+          value="{{adjustPercent}}"
+          activeColor="#5B9BD5"
+          block-size="20"
+          bindchange="onAdjust"
+        />
+        <view class="field-hint">相对 TDEE 的增减。减脂越激进越难长期坚持，建议保持在 −20% 以内。</view>
+      </view>
+
+      <view class="notice notice-warn" wx:if="{{preview.target.floorApplied}}">
+        计算出的热量低于安全下限，已按 {{preview.target.value}} kcal 计。
+      </view>
+      <view class="notice notice-warn" wx:for="{{preview.warnings}}" wx:key="*this">{{item}}</view>
+    </view>
+
+    <!-- 计算模式 -->
+    <view class="card" wx:if="{{preview.ok}}">
+      <view class="card-head">
+        <text class="h2">计算模式</text>
+      </view>
+      <segmented options="{{modeOptions}}" value="{{draft.mode}}" bind:change="onModeChange" />
+
+      <view class="field mt-24" wx:if="{{draft.mode === 'calorie'}}">
+        <view class="field-label">
+          <text>目标热量 (kcal)</text>
+          <text class="link" bindtap="useComputedTarget">用估算值 {{preview.target.value}}</text>
+        </view>
+        <input type="digit" placeholder="例如 2000" value="{{calorieInput}}" bindinput="onCalorieInput" />
+        <view class="field-hint">目标热量优先模式下，蛋白质与脂肪仍按系数锁定，剩余热量分配给碳水。</view>
+      </view>
+
+      <view class="notice notice-danger" wx:if="{{conflict}}">
+        系数热量冲突：蛋白 {{conflict.protein}}g + 脂肪 {{conflict.fat}}g 已占 {{conflict.lockedKcal}} kcal，超出目标 {{conflict.overBy}} kcal。系统不会自动修改你的系数或目标，请手动调整。
+      </view>
+
+      <view class="diff" wx:if="{{modeDiff}}">
+        <view class="diff-row">
+          <text class="diff-label">系数优先</text>
+          <text class="num">{{modeDiff.coefficientKcal}} kcal</text>
+        </view>
+        <view class="diff-row">
+          <text class="diff-label">目标热量优先</text>
+          <text class="num">{{modeDiff.calorieKcal}} kcal</text>
+        </view>
+        <view class="diff-row total">
+          <text class="diff-label">两者差异</text>
+          <text class="num {{modeDiff.delta > 0 ? 'up' : 'down'}}">{{modeDiff.delta > 0 ? '+' : ''}}{{modeDiff.delta}} kcal（碳水 {{modeDiff.carbDelta > 0 ? '+' : ''}}{{modeDiff.carbDelta}}g）</text>
+        </view>
+        <view class="micro">两种模式并列展示，选择哪种由你决定，不会互相覆盖。</view>
+      </view>
+    </view>
+
+    <!-- 每日营养素目标 -->
+    <view class="card" wx:if="{{preview.ok}}">
+      <view class="card-head">
+        <text class="h2">每日营养素目标</text>
+      </view>
+      <view class="macro-row" wx:for="{{targets}}" wx:key="key">
+        <view class="dot" style="background: {{item.color}}"></view>
+        <view class="macro-name">{{item.label}}</view>
+        <view class="macro-grams num">{{item.grams}}<text class="unit-sm">g</text></view>
+        <view class="macro-kcal num">{{item.kcal}} kcal</view>
+      </view>
+      <view class="micro mt-16">
+        合计 {{preview.active.kcalFromMacros}} kcal（碳水×4 + 蛋白质×4 + 脂肪×9）。
+        {{band.custom ? '使用自定义系数。' : '按体重 × 系数档位计算。'}}
+      </view>
+    </view>
+
+    <!-- 计算依据 -->
+    <view class="card" wx:if="{{preview.ok}}">
+      <view class="card-head"><text class="h2">计算依据</text></view>
+      <view class="row">
+        <text class="row-label">BMR 公式</text>
+        <text class="row-value">Mifflin-St Jeor</text>
+      </view>
+      <view class="row">
+        <text class="row-label">活动系数</text>
+        <text class="row-value num">{{preview.inputs.activityFactor}}（{{preview.inputs.activityLevel}}）</text>
+      </view>
+      <view class="row">
+        <text class="row-label">系数档位</text>
+        <text class="row-value">{{band.label}}</text>
+      </view>
+      <view class="row">
+        <text class="row-label">系数 (碳/蛋/脂)</text>
+        <text class="row-value num">{{band.coefficients.carb}} / {{band.coefficients.protein}} / {{band.coefficients.fat}} g/kg</text>
+      </view>
+      <view class="row">
+        <text class="row-label">计算体重</text>
+        <text class="row-value num">{{preview.inputs.weightKg}} kg</text>
+      </view>
+      <view class="row" wx:if="{{updatedAt}}">
+        <text class="row-label">计划更新时间</text>
+        <text class="row-value">{{updatedAt}}</text>
+      </view>
+      <view class="link-row" bindtap="goTraining">修改系数档位与自定义系数 ›</view>
+      <view class="micro">系数档位是你设定的个人偏好规则，不是普适医学标准。</view>
+    </view>
+
+    <!-- 历史版本 -->
+    <view class="card">
+      <view class="card-head">
+        <text class="h2">历史目标快照</text>
+        <text class="micro">共 {{versions.length}} 条</text>
+      </view>
+      <view class="list-item" wx:for="{{versions}}" wx:key="date">
+        <view class="list-main">
+          <view class="list-title num">{{item.kcal}} kcal · {{item.goal}}</view>
+          <view class="list-desc">{{item.date}} · {{item.mode}} · 碳{{item.carb}} 蛋{{item.protein}} 脂{{item.fat}}</view>
+        </view>
+      </view>
+      <view class="meal-empty" wx:if="{{versions.length === 0}}">还没有目标快照</view>
+      <view class="micro">快照一旦生成即冻结，切换目标不会改写过去的记录。</view>
+    </view>
+
+  </block>
+</view>
+
+<view class="action-bar" wx:if="{{ready}}">
+  <view class="btn btn-ghost" bindtap="resetDraft" wx:if="{{dirty}}">放弃修改</view>
+  <view class="btn btn-primary {{dirty ? '' : 'btn-disabled'}}" bindtap="save">保存计划</view>
+</view>

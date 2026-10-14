@@ -1,0 +1,21 @@
+<view class="macro {{unknown ? 'is-unknown' : ''}}">
+  <view class="macro-head">
+    <view class="macro-label">
+      <view class="dot" style="background: {{color}}"></view>
+      <text>{{label}}</text>
+    </view>
+    <view class="macro-value">
+      <text class="num now">{{valueText}}</text>
+      <text class="slash">/</text>
+      <text class="num goal">{{targetText}}</text>
+      <text class="unit">{{unit}}</text>
+    </view>
+  </view>
+  <view class="track">
+    <view
+      class="fill {{over ? 'is-over' : ''}}"
+      style="width: {{percent}}%; background: {{color}}"
+    ></view>
+  </view>
+  <view class="macro-foot {{over ? 'is-over' : ''}}">{{footText}}</view>
+</view>

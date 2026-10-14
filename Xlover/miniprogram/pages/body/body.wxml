@@ -1,0 +1,141 @@
+<view class="container has-action-bar">
+
+  <view class="notice notice-success" wx:if="{{focusWeight}}">从首页进入：直接在下方「记录今日体重」填写即可。</view>
+
+  <view class="notice notice-info">
+    资料用于计算 BMR / TDEE 与每日营养素目标。修改后只影响今天及以后的目标，历史记录与历史快照不会被改写。
+  </view>
+
+  <!-- 估算结果 -->
+  <view class="card" wx:if="{{estimate}}">
+    <view class="card-head">
+      <text class="h2">当前估算</text>
+      <text class="chip chip-estimated">公式估算</text>
+    </view>
+    <view class="stat-row">
+      <view class="stat">
+        <view class="stat-value num">{{estimate.bmr}}<text class="stat-unit">kcal</text></view>
+        <view class="stat-label">基础代谢 BMR</view>
+      </view>
+      <view class="stat">
+        <view class="stat-value num">{{estimate.tdee}}<text class="stat-unit">kcal</text></view>
+        <view class="stat-label">每日消耗 TDEE</view>
+      </view>
+      <view class="stat">
+        <view class="stat-value num">{{estimate.bmi}}<text class="stat-unit">{{estimate.bmiLabel}}</text></view>
+        <view class="stat-label">BMI</view>
+      </view>
+    </view>
+    <view class="micro mt-16">BMR 采用 Mifflin-St Jeor 公式；TDEE = BMR × 活动系数。均为估算值，非医学测量。</view>
+  </view>
+
+  <!-- 基本资料 -->
+  <view class="card">
+    <view class="card-head">
+      <text class="h2">基本资料</text>
+      <text class="chip chip-measured" wx:if="{{saved}}">已保存</text>
+    </view>
+
+    <view class="field">
+      <view class="field-label"><text>性别</text><text class="micro">用于 BMR 公式</text></view>
+      <segmented options="{{genderOptions}}" value="{{form.gender}}" bind:change="onGender" />
+    </view>
+
+    <view class="field-row">
+      <view class="field">
+        <view class="field-label"><text>年龄</text></view>
+        <input type="number" placeholder="30" value="{{form.age}}" data-key="age" bindinput="onInput" />
+      </view>
+      <view class="field">
+        <view class="field-label"><text>身高 (cm)</text></view>
+        <input type="digit" placeholder="175" value="{{form.heightCm}}" data-key="heightCm" bindinput="onInput" />
+      </view>
+    </view>
+
+    <view class="field-row">
+      <view class="field">
+        <view class="field-label"><text>当前体重 (kg)</text></view>
+        <input type="digit" placeholder="70" value="{{form.weightKg}}" data-key="weightKg" bindinput="onInput" />
+      </view>
+      <view class="field">
+        <view class="field-label"><text>体脂率 (%)</text><text class="micro">选填</text></view>
+        <input type="digit" placeholder="选填" value="{{form.bodyFatPercent}}" data-key="bodyFatPercent" bindinput="onInput" />
+      </view>
+    </view>
+
+    <view class="field-row">
+      <view class="field">
+        <view class="field-label"><text>腰围 (cm)</text><text class="micro">选填</text></view>
+        <input type="digit" placeholder="选填" value="{{form.waistCm}}" data-key="waistCm" bindinput="onInput" />
+      </view>
+      <view class="field">
+        <view class="field-label"><text>目标体重 (kg)</text><text class="micro">选填</text></view>
+        <input type="digit" placeholder="选填" value="{{form.targetWeightKg}}" data-key="targetWeightKg" bindinput="onInput" />
+      </view>
+    </view>
+
+    <view class="field">
+      <view class="field-label"><text>目标日期</text><text class="micro">选填</text></view>
+      <picker mode="date" value="{{form.targetDate}}" bindchange="onTargetDate">
+        <view class="picker-value {{form.targetDate ? '' : 'placeholder'}}">{{form.targetDate || '未设置'}}</view>
+      </picker>
+    </view>
+
+    <view class="field">
+      <view class="field-label"><text>日常活动水平</text></view>
+      <picker mode="selector" range="{{activityLevels}}" range-key="label" value="{{activityIndex}}" bindchange="onActivity">
+        <view class="picker-value">{{activityLevels[activityIndex].label}}</view>
+      </picker>
+      <view class="field-hint">活动水平只描述训练之外的日常活动强度，训练消耗请在训练页单独记录，两者不重复计算。</view>
+    </view>
+
+    <view class="field-error" wx:for="{{errors}}" wx:key="*this">{{item}}</view>
+    <view class="field-hint" wx:for="{{warnings}}" wx:key="*this">{{item}}</view>
+  </view>
+
+  <!-- 影响提示 -->
+  <view class="card" wx:if="{{planImpact.length}}">
+    <view class="card-head"><text class="h2">本次改动</text></view>
+    <view class="impact" wx:for="{{planImpact}}" wx:key="*this">{{item}}</view>
+    <view class="micro mt-16">保存后这些改动会用于今日及以后的目标计算。</view>
+  </view>
+
+  <!-- 记录体重 -->
+  <view class="card">
+    <view class="card-head">
+      <text class="h2">记录今日体重</text>
+    </view>
+    <view class="field-row">
+      <view class="field">
+        <view class="field-label"><text>体重 (kg)</text></view>
+        <input type="digit" placeholder="今日体重" value="{{weightInput}}" bindinput="onWeightInput" />
+      </view>
+      <view class="field">
+        <view class="field-label"><text>体脂率 (%)</text><text class="micro">选填</text></view>
+        <input type="digit" placeholder="选填" value="{{bodyFatInput}}" bindinput="onBodyFatInput" />
+      </view>
+    </view>
+    <view class="btn btn-secondary" bindtap="saveWeight">记录体重</view>
+    <view class="field-hint">同一天重复记录会覆盖当天数据，不会新增多条。</view>
+  </view>
+
+  <!-- 体重历史 -->
+  <view class="card">
+    <view class="card-head">
+      <text class="h2">体重历史</text>
+      <text class="micro" wx:if="{{weightHistory.length}}">最近 {{weightHistory.length}} 条</text>
+    </view>
+    <view class="list-item" wx:for="{{weightHistory}}" wx:key="date">
+      <view class="list-main">
+        <view class="list-title num">{{item.weightKg}} kg</view>
+        <view class="list-desc">{{item.label}} · {{item.date}}</view>
+      </view>
+      <view class="list-tail num" wx:if="{{item.bmi}}">BMI {{item.bmi}}</view>
+    </view>
+    <view class="meal-empty" wx:if="{{weightHistory.length === 0}}">还没有体重记录</view>
+  </view>
+</view>
+
+<view class="action-bar">
+  <view class="btn btn-primary" bindtap="save">保存资料</view>
+</view>

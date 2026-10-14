@@ -1,4 +1,7 @@
 {
-  "navigationBarTitleText": "进度",
-  "usingComponents": {}
+  "navigationBarTitleText": "统计",
+  "usingComponents": {
+    "segmented": "/components/segmented/index",
+    "macro-bar": "/components/macro-bar/index"
+  }
 }

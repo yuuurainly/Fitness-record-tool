@@ -1,7 +1,7 @@
 {
   "pages": [
-    "pages/guide/guide",
     "pages/index/index",
+    "pages/guide/guide",
     "pages/record/record",
     "pages/progress/progress",
     "pages/profile/profile",
@@ -12,7 +12,11 @@
     "pages/weight/weight",
     "pages/rewardSettings/rewardSettings",
     "pages/rewardExchange/rewardExchange",
-    "pages/remind/remind"
+    "pages/remind/remind",
+    "pages/diagnostics/diagnostics",
+    "pages/body/body",
+    "pages/plan/plan",
+    "pages/data/data"
   ],
   "window": {
     "backgroundTextStyle": "light",
@@ -30,27 +34,23 @@
     "list": [
       {
         "pagePath": "pages/index/index",
-        "text": "首页"
+        "text": "今日"
       },
       {
-        "pagePath": "pages/record/record",
-        "text": "记录"
+        "pagePath": "pages/food/food",
+        "text": "饮食"
+      },
+      {
+        "pagePath": "pages/exercise/exercise",
+        "text": "训练"
       },
       {
         "pagePath": "pages/progress/progress",
-        "text": "进度"
-      },
-      {
-        "pagePath": "pages/message/message",
-        "text": "消息"
+        "text": "统计"
       },
       {
         "pagePath": "pages/profile/profile",
         "text": "我的"
-      },
-      {
-        "pagePath": "pages/task/task",
-        "text": "任务"
       }
     ]
   },

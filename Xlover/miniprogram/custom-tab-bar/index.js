@@ -5,35 +5,26 @@ Component({
   },
 
   attached() {
-    const role = wx.getStorageSync('userRole') || 'main'
-    this.updateTabList(role)
+    this.updateTabList()
   },
 
   pageLifetimes: {
     show() {
-      const role = wx.getStorageSync('userRole') || 'main'
-      this.updateTabList(role)
+      this.updateTabList()
     }
   },
 
   methods: {
-    updateTabList(role) {
-      const mainTabs = [
-        { pagePath: '/pages/index/index', text: '首页', icon: '🏠' },
-        { pagePath: '/pages/record/record', text: '记录', icon: '📝' },
-        { pagePath: '/pages/progress/progress', text: '进度', icon: '📊' },
-        { pagePath: '/pages/message/message', text: '消息', icon: '💬' },
-        { pagePath: '/pages/profile/profile', text: '我的', icon: '👤' }
-      ]
-      const partnerTabs = [
-        { pagePath: '/pages/index/index', text: '首页', icon: '🏠' },
-        { pagePath: '/pages/task/task', text: '任务', icon: '📋' },
-        { pagePath: '/pages/progress/progress', text: '进度', icon: '📊' },
-        { pagePath: '/pages/message/message', text: '消息', icon: '💬' },
+    updateTabList() {
+      // 个人健身工具：今日 / 饮食 / 训练 / 统计 / 我的
+      const list = [
+        { pagePath: '/pages/index/index', text: '今日', icon: '🏠' },
+        { pagePath: '/pages/food/food', text: '饮食', icon: '🍱' },
+        { pagePath: '/pages/exercise/exercise', text: '训练', icon: '🏋️' },
+        { pagePath: '/pages/progress/progress', text: '统计', icon: '📈' },
         { pagePath: '/pages/profile/profile', text: '我的', icon: '👤' }
       ]
 
-      const list = role === 'partner' ? partnerTabs : mainTabs
       this.setData({ list })
 
       // 更新选中态

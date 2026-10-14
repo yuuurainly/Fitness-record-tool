@@ -1,314 +1,247 @@
-const app = getApp()
-const util = require('../../utils/util.js')
+const appStore = require('../../utils/appStore.js')
+const metrics = require('../../utils/metrics.js')
+const fmt = require('../../utils/format.js')
+
+const RANGE_OPTIONS = [
+  { value: '7', label: '近 7 天' },
+  { value: '30', label: '近 30 天' }
+]
+
+const CHART_PAD = 34
+
+/** 读取设备像素比：优先新接口，避免 getSystemInfoSync 弃用告警 */
+function getPixelRatio () {
+  try {
+    if (typeof wx.getWindowInfo === 'function') return wx.getWindowInfo().pixelRatio || 2
+  } catch (e) {}
+  try {
+    if (typeof wx.getSystemInfoSync === 'function') return wx.getSystemInfoSync().pixelRatio || 2
+  } catch (e) {}
+  return 2
+}
 
 Page({
   data: {
-    userRole: '',
-    currentYear: new Date().getFullYear(),
-    currentMonth: new Date().getMonth() + 1,
-    weekdays: ['日', '一', '二', '三', '四', '五', '六'],
-    calendarDays: [],
-    badges: [],
-    weightHistory: [],
-    caloriesTrend: [],
-    exerciseStats: [],
-    expandBadges: false,
-    expandCalendar: true,
-    expandCalories: true,
-    expandExercise: true,
-    taskStats: {
-      totalTasks: 0,
-      completedTasks: 0,
-      activeTasks: 0,
-      pendingTasks: 0,
-      completionRate: 0,
-      totalPoints: 0
-    },
-    // 积分调整弹窗
-    showPointsModal: false,
-    pointsDelta: '',
-    pointsReason: ''
+    rangeOptions: RANGE_OPTIONS,
+    range: '7',
+    days: 7,
+
+    weight: null,
+    intake: null,
+    macro: null,
+    training: null,
+    goals: null,
+
+    macroToday: [],
+    macroDateLabel: '',
+
+    hasAnyData: false
   },
 
-  onShow() {
+  onLoad () {
+    this.setData({ days: Number(this.data.range) })
+  },
+
+  onShow () {
     if (typeof this.getTabBar === 'function' && this.getTabBar()) {
-      const role = wx.getStorageSync('userRole') || 'main'
-      this.getTabBar().setData({ selected: role === 'partner' ? 2 : 2 })
+      this.getTabBar().setData({ selected: 3 })
     }
-    this.setData({ userRole: wx.getStorageSync('userRole') })
-    this.loadProgressData()
-    this.generateCalendar()
-    this.loadTaskStats()
+    this.refresh()
   },
 
-  async loadTaskStats() {
-    try {
-      const res = await wx.cloud.callFunction({
-        name: 'getUserData',
-        data: { type: 'getTaskStats' }
-      })
-      if (res.result) {
-        this.setData({ taskStats: res.result })
-      }
-    } catch (e) {
-      console.error('加载任务统计失败', e)
-    }
+  onRange (e) {
+    const range = e.detail.value
+    this.setData({ range, days: Number(range) })
+    this.refresh()
   },
 
-  async loadProgressData() {
-    try {
-      const res = await wx.cloud.callFunction({
-        name: 'getUserData',
-        data: { type: 'getProgress' }
-      })
+  refresh () {
+    const store = appStore.getStore()
+    const today = fmt.today()
+    const days = this.data.days
 
-      if (res.result) {
-        this.setData({
-          badges: res.result.badges || [],
-          weightHistory: res.result.weightHistory || [],
-          caloriesTrend: res.result.caloriesTrend || [],
-          exerciseStats: res.result.exerciseStats || []
-        })
+    const weight = metrics.getWeightSeries(store, { days: days === 7 ? 30 : days, today })
+    const intake = metrics.getIntakeSeries(store, { days, today })
+    const macro = metrics.getMacroSeries(store, { days: Math.min(days, 7), today })
+    const training = metrics.getTrainingSeries(store, { days, today })
+    const goals = metrics.getGoalHistory(store, { limit: 10 })
+    const day = metrics.getDaySummary(store, today, { today })
 
-        if (this.data.weightHistory.length > 1) {
-          wx.nextTick(() => this.drawWeightChart())
-        }
-      }
-    } catch (err) {
-      console.error('加载进度数据失败', err)
-    }
-  },
-
-  generateCalendar() {
-    const { currentYear, currentMonth } = this.data
-    const firstDay = new Date(currentYear, currentMonth - 1, 1)
-    const lastDay = new Date(currentYear, currentMonth, 0)
-    const daysInMonth = lastDay.getDate()
-    const startWeekday = firstDay.getDay()
-
-    const days = []
-    for (let i = 0; i < startWeekday; i++) {
-      days.push({ empty: true, key: 'e' + i })
-    }
-
-    const today = util.getToday()
-    for (let i = 1; i <= daysInMonth; i++) {
-      const date = `${currentYear}-${String(currentMonth).padStart(2, '0')}-${String(i).padStart(2, '0')}`
-      days.push({
-        day: i,
-        date,
-        today: date === today,
-        checked: false,
-        key: date
-      })
-    }
-
-    this.setData({ calendarDays: days })
-    this.loadCheckinDays()
-  },
-
-  async loadCheckinDays() {
-    try {
-      const { currentYear, currentMonth } = this.data
-      const res = await wx.cloud.callFunction({
-        name: 'getUserData',
-        data: {
-          type: 'getCheckinDays',
-          year: currentYear,
-          month: currentMonth
-        }
-      })
-
-      if (res.result && res.result.days) {
-        const checkedDays = res.result.days
-        const calendarDays = this.data.calendarDays.map(day => {
-          if (day.date && checkedDays.includes(day.date)) {
-            return { ...day, checked: true }
-          }
-          return day
-        })
-        this.setData({ calendarDays })
-      }
-    } catch (err) {
-      console.error('加载打卡日期失败', err)
-    }
-  },
-
-  toggleSection(e) {
-    const key = e.currentTarget.dataset.key
-    this.setData({ [key]: !this.data[key] })
-  },
-
-  prevMonth() {
-    let { currentYear, currentMonth } = this.data
-    currentMonth--
-    if (currentMonth < 1) {
-      currentMonth = 12
-      currentYear--
-    }
-    this.setData({ currentYear, currentMonth }, () => {
-      this.generateCalendar()
+    this.setData({
+      weight,
+      intake,
+      macro,
+      training,
+      goals,
+      macroToday: day.macroRows,
+      macroDateLabel: fmt.humanDate(today),
+      hasAnyData: weight.hasData || intake.hasData || training.hasData || goals.hasData
+    }, () => {
+      if (weight.hasEnough) wx.nextTick(() => this.drawWeightChart())
+      if (intake.hasData) wx.nextTick(() => this.drawIntakeChart())
     })
   },
 
-  nextMonth() {
-    let { currentYear, currentMonth } = this.data
-    currentMonth++
-    if (currentMonth > 12) {
-      currentMonth = 1
-      currentYear++
-    }
-    this.setData({ currentYear, currentMonth }, () => {
-      this.generateCalendar()
-    })
-  },
+  /* ---------------- 图表 ---------------- */
 
-  drawWeightChart() {
+  prepareCanvas (selector, callback) {
     const query = wx.createSelectorQuery().in(this)
-    query.select('#progressWeightChart').fields({ node: true, size: true }).exec((res) => {
+    query.select(selector).fields({ node: true, size: true }).exec(res => {
       if (!res || !res[0] || !res[0].node) return
-
       const canvas = res[0].node
       const ctx = canvas.getContext('2d')
-      const sysInfo = wx.getSystemInfoSync()
-      const dpr = sysInfo.pixelRatio
-      const cssWidth = res[0].width
-      const cssHeight = res[0].height
-
-      if (!cssWidth || !cssHeight) return
-
-      canvas.width = cssWidth * dpr
-      canvas.height = cssHeight * dpr
+      const dpr = getPixelRatio()
+      const w = res[0].width
+      const h = res[0].height
+      if (!w || !h) return
+      canvas.width = w * dpr
+      canvas.height = h * dpr
       ctx.scale(dpr, dpr)
-      ctx.clearRect(0, 0, cssWidth, cssHeight)
+      ctx.clearRect(0, 0, w, h)
+      callback(ctx, w, h)
+    })
+  },
 
-      const data = this.data.weightHistory.slice(0, 7).reverse()
+  drawWeightChart () {
+    const points = this.data.weight.points.map(p => ({ label: p.label, value: p.weightKg }))
+    this.prepareCanvas('#weightChart', (ctx, w, h) => {
+      const data = points.filter(p => p.value !== null)
       if (data.length < 2) return
 
-      const padding = 32
-      const chartW = cssWidth - padding * 2
-      const chartH = cssHeight - padding * 2
+      const pad = CHART_PAD
+      const chartW = w - pad * 2
+      const chartH = h - pad * 2
+      const values = data.map(d => Number(d.value))
+      const min = Math.min.apply(null, values)
+      const max = Math.max.apply(null, values)
+      const span = (max - min) || 1
+      const lo = min - span * 0.2
+      const hi = max + span * 0.2
+      const range = (hi - lo) || 1
+      const xAt = i => pad + (i / (data.length - 1)) * chartW
+      const yAt = v => pad + (1 - (Number(v) - lo) / range) * chartH
 
-      const weights = data.map(d => parseFloat(d.weight))
-      const minW = Math.min(...weights)
-      const maxW = Math.max(...weights)
-      const paddingY = (maxW - minW) * 0.2 || 1
-      const minWeight = minW - paddingY
-      const maxWeight = maxW + paddingY
-      const range = maxWeight - minWeight || 1
-
-      // 绘制填充区域
       ctx.beginPath()
-      ctx.moveTo(padding, padding + chartH)
-      data.forEach((item, index) => {
-        const x = padding + (index / (data.length - 1)) * chartW
-        const y = padding + (1 - (parseFloat(item.weight) - minWeight) / range) * chartH
-        if (index === 0) ctx.lineTo(x, y)
-        else ctx.lineTo(x, y)
-      })
-      ctx.lineTo(padding + chartW, padding + chartH)
+      ctx.moveTo(xAt(0), pad + chartH)
+      data.forEach((d, i) => ctx.lineTo(xAt(i), yAt(d.value)))
+      ctx.lineTo(xAt(data.length - 1), pad + chartH)
       ctx.closePath()
-      const gradient = ctx.createLinearGradient(0, padding, 0, padding + chartH)
-      gradient.addColorStop(0, 'rgba(91, 155, 213, 0.2)')
-      gradient.addColorStop(1, 'rgba(91, 155, 213, 0.02)')
-      ctx.fillStyle = gradient
+      const grad = ctx.createLinearGradient(0, pad, 0, pad + chartH)
+      grad.addColorStop(0, 'rgba(91, 155, 213, 0.18)')
+      grad.addColorStop(1, 'rgba(91, 155, 213, 0.02)')
+      ctx.fillStyle = grad
       ctx.fill()
 
-      // 绘制折线
       ctx.beginPath()
       ctx.strokeStyle = '#5B9BD5'
       ctx.lineWidth = 2.5
-      ctx.lineCap = 'round'
       ctx.lineJoin = 'round'
-      data.forEach((item, index) => {
-        const x = padding + (index / (data.length - 1)) * chartW
-        const y = padding + (1 - (parseFloat(item.weight) - minWeight) / range) * chartH
-        if (index === 0) ctx.moveTo(x, y)
-        else ctx.lineTo(x, y)
+      ctx.lineCap = 'round'
+      data.forEach((d, i) => {
+        if (i === 0) ctx.moveTo(xAt(i), yAt(d.value))
+        else ctx.lineTo(xAt(i), yAt(d.value))
       })
       ctx.stroke()
 
-      // 绘制点和标签
-      const fontSize = Math.max(10, cssWidth / 35)
-      data.forEach((item, index) => {
-        const x = padding + (index / (data.length - 1)) * chartW
-        const y = padding + (1 - (parseFloat(item.weight) - minWeight) / range) * chartH
-
-        // 点
+      const fontSize = Math.max(10, w / 30)
+      const step = Math.ceil(data.length / 6)
+      data.forEach((d, i) => {
         ctx.beginPath()
         ctx.fillStyle = '#fff'
-        ctx.arc(x, y, 5, 0, Math.PI * 2)
+        ctx.arc(xAt(i), yAt(d.value), 4, 0, Math.PI * 2)
         ctx.fill()
         ctx.beginPath()
         ctx.fillStyle = '#5B9BD5'
-        ctx.arc(x, y, 3.5, 0, Math.PI * 2)
+        ctx.arc(xAt(i), yAt(d.value), 2.6, 0, Math.PI * 2)
         ctx.fill()
 
-        // 体重值
-        ctx.fillStyle = '#5B9BD5'
-        ctx.font = `bold ${fontSize}px sans-serif`
-        ctx.textAlign = 'center'
-        ctx.fillText(parseFloat(item.weight).toFixed(1), x, y - 10)
-
-        // 日期
-        ctx.fillStyle = '#999'
-        ctx.font = `${fontSize}px sans-serif`
-        ctx.fillText(item.date.slice(5), x, cssHeight - 8)
-      })
-    })
-  },
-
-  // ===== 伴侣调整积分 =====
-  editMainPoints() {
-    this.setData({
-      showPointsModal: true,
-      pointsDelta: '',
-      pointsReason: ''
-    })
-  },
-
-  closePointsModal() {
-    this.setData({ showPointsModal: false })
-  },
-
-  inputPointsDelta(e) {
-    this.setData({ pointsDelta: e.detail.value })
-  },
-
-  inputPointsReason(e) {
-    this.setData({ pointsReason: e.detail.value })
-  },
-
-  async savePointsAdjust() {
-    const { pointsDelta, pointsReason } = this.data
-    const delta = parseInt(pointsDelta)
-    if (isNaN(delta) || delta === 0) {
-      wx.showToast({ title: '请输入有效的积分值', icon: 'none' })
-      return
-    }
-
-    wx.showLoading({ title: '保存中...' })
-    try {
-      const res = await wx.cloud.callFunction({
-        name: 'updateData',
-        data: {
-          type: 'updateMainPoints',
-          points: delta,
-          reason: pointsReason || '伴侣手动调整'
+        if (i % step === 0 || i === data.length - 1) {
+          ctx.fillStyle = '#5B9BD5'
+          ctx.font = `600 ${fontSize}px sans-serif`
+          ctx.textAlign = 'center'
+          ctx.fillText(Number(d.value).toFixed(1), xAt(i), yAt(d.value) - 10)
+          ctx.fillStyle = '#999999'
+          ctx.font = `${fontSize}px sans-serif`
+          ctx.fillText(d.label, xAt(i), h - 8)
         }
       })
-      if (res.result?.success) {
-        wx.hideLoading()
-        wx.showToast({ title: '已调整', icon: 'success' })
-        this.setData({ showPointsModal: false })
-        this.loadTaskStats()
-      } else {
-        wx.hideLoading()
-        wx.showToast({ title: res.result?.error || '调整失败', icon: 'none' })
+    })
+  },
+
+  drawIntakeChart () {
+    const pts = this.data.intake.points
+    const points = pts.map(p => ({ label: p.label, value: p.kcal }))
+
+    this.prepareCanvas('#intakeChart', (ctx, w, h) => {
+      const values = points.filter(p => p.value !== null).map(p => Number(p.value))
+      if (!values.length) return
+
+      const pad = CHART_PAD
+      const chartW = w - pad * 2
+      const chartH = h - pad * 2
+      const targetValues = pts.map(p => p.target).filter(t => t !== null)
+      const top = Math.max(Math.max.apply(null, values), Math.max.apply(null, targetValues.concat([0]))) * 1.12 || 1
+      const yAt = v => pad + (1 - v / top) * chartH
+      const slot = chartW / points.length
+      const barW = Math.min(slot * 0.55, 22)
+
+      // 每日目标可能不同（历史快照冻结），所以逐日画刻度，不合并成一条线
+      const cxAt = i => pad + slot * i + slot / 2
+      pts.forEach((p, i) => {
+        if (p.target === null) return
+        const y = yAt(p.target)
+        ctx.beginPath()
+        ctx.setLineDash([4, 4])
+        ctx.strokeStyle = '#C8CFD8'
+        ctx.lineWidth = 1
+        ctx.moveTo(cxAt(i) - barW * 0.75, y)
+        ctx.lineTo(cxAt(i) + barW * 0.75, y)
+        ctx.stroke()
+        ctx.setLineDash([])
+      })
+
+      // 只标注最近一个有目标的日期，避免误读成「所有天共用同一个目标」
+      for (let i = pts.length - 1; i >= 0; i--) {
+        if (pts[i].target === null) continue
+        const y = yAt(pts[i].target)
+        ctx.fillStyle = '#999999'
+        ctx.font = '10px sans-serif'
+        ctx.textAlign = 'center'
+        ctx.fillText(`目标 ${pts[i].target}`, cxAt(i), y - 5)
+        break
       }
-    } catch (e) {
-      wx.hideLoading()
-      wx.showToast({ title: '网络异常', icon: 'none' })
-    }
+
+      const fontSize = Math.max(10, w / 30)
+      const step = Math.ceil(points.length / 6)
+      points.forEach((p, i) => {
+        const cx = pad + slot * i + slot / 2
+        if (p.value !== null) {
+          const y = yAt(Number(p.value))
+          // 用当天自己的目标判断是否超标
+          const dayTarget = pts[i].target
+          const over = dayTarget !== null && Number(p.value) > dayTarget
+          ctx.fillStyle = over ? '#E85D5D' : '#5B9BD5'
+          ctx.fillRect(cx - barW / 2, y, barW, Math.max(pad + chartH - y, 2))
+        }
+        if (i % step === 0 || i === points.length - 1) {
+          ctx.fillStyle = '#999999'
+          ctx.font = `${fontSize}px sans-serif`
+          ctx.textAlign = 'center'
+          ctx.fillText(p.label, cx, h - 8)
+        }
+      })
+    })
+  },
+
+  goFood () {
+    wx.switchTab({ url: '/pages/food/food' })
+  },
+
+  goTraining () {
+    wx.switchTab({ url: '/pages/exercise/exercise' })
+  },
+
+  goBody () {
+    wx.navigateTo({ url: '/pages/body/body' })
   }
 })

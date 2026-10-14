@@ -15,6 +15,30 @@ page {
   --radius: 16rpx;
   --radius-lg: 24rpx;
 
+  /* 间距刻度：以 8rpx 为基准 */
+  --gap-xs: 8rpx;
+  --gap-sm: 16rpx;
+  --gap-md: 24rpx;
+  --gap-lg: 32rpx;
+  --gap-xl: 48rpx;
+
+  /* 三大营养素语义色（克制、可区分，非霓虹） */
+  --macro-carb: #C98A2B;
+  --macro-protein: #4C9A8F;
+  --macro-fat: #8E7CC3;
+  --track: #EDF0F4;
+
+  /* 文字层级 */
+  --fs-display: 76rpx;
+  --fs-h1: 42rpx;
+  --fs-h2: 32rpx;
+  --fs-body: 28rpx;
+  --fs-cap: 24rpx;
+  --fs-micro: 22rpx;
+
+  --radius-sm: 12rpx;
+  --radius-pill: 999rpx;
+
   background-color: var(--bg-page);
   color: var(--text-primary);
   font-size: 28rpx;
@@ -23,8 +47,13 @@ page {
 }
 
 .container {
-  padding: 24rpx 24rpx calc(100rpx + env(safe-area-inset-bottom) + 24rpx) 24rpx;
+  padding: 24rpx 24rpx calc(120rpx + env(safe-area-inset-bottom) + 24rpx) 24rpx;
   box-sizing: border-box;
+}
+
+/* 没有底部导航的页面用这个，避免出现多余留白 */
+.container-flat {
+  padding-bottom: calc(24rpx + env(safe-area-inset-bottom));
 }
 
 .card {
@@ -60,17 +89,36 @@ page {
   border-radius: 44rpx;
   font-size: 30rpx;
   font-weight: 500;
+  white-space: nowrap;
   transition: opacity 0.2s;
 }
 
 .btn-primary {
-  background: linear-gradient(135deg, var(--primary), var(--primary-dark));
+  background: var(--primary);
   color: #fff;
 }
 
 .btn-secondary {
   background: var(--primary-light);
   color: var(--primary);
+}
+
+.btn-ghost {
+  background: transparent;
+  color: var(--text-secondary);
+  border: 1rpx solid var(--border);
+}
+
+.btn-danger {
+  background: #FDECEC;
+  color: var(--danger);
+}
+
+.btn-sm {
+  height: 64rpx;
+  border-radius: 32rpx;
+  font-size: 26rpx;
+  padding: 0 28rpx;
 }
 
 .btn:active {
@@ -182,4 +230,248 @@ page {
   justify-content: center;
   padding: 40rpx;
   color: var(--text-light);
+}
+
+/* ==================== 排版与通用布局 ==================== */
+
+.h1 {
+  font-size: var(--fs-h1);
+  font-weight: 700;
+  line-height: 1.3;
+}
+
+.h2 {
+  font-size: var(--fs-h2);
+  font-weight: 600;
+}
+
+.cap {
+  font-size: var(--fs-cap);
+  color: var(--text-secondary);
+}
+
+.micro {
+  font-size: var(--fs-micro);
+  color: var(--text-light);
+}
+
+/* 数字统一用等宽字形，避免跳动 */
+.num {
+  font-variant-numeric: tabular-nums;
+  font-feature-settings: 'tnum';
+}
+
+.row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  min-height: 88rpx;
+}
+
+.row-label {
+  font-size: var(--fs-body);
+  color: var(--text-secondary);
+}
+
+.row-value {
+  font-size: var(--fs-body);
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.divider {
+  height: 1rpx;
+  background: var(--border);
+  margin: var(--gap-sm) 0;
+}
+
+.list-item {
+  display: flex;
+  align-items: center;
+  padding: 24rpx 0;
+  border-bottom: 1rpx solid var(--border);
+}
+
+.list-item:last-child {
+  border-bottom: none;
+}
+
+.list-main {
+  flex: 1;
+  min-width: 0;
+}
+
+.list-title {
+  font-size: var(--fs-body);
+  font-weight: 500;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.list-desc {
+  font-size: var(--fs-micro);
+  color: var(--text-light);
+  margin-top: 4rpx;
+}
+
+.list-tail {
+  margin-left: var(--gap-sm);
+  text-align: right;
+  font-size: var(--fs-body);
+  font-weight: 600;
+}
+
+.arrow {
+  color: var(--text-light);
+  font-size: 28rpx;
+  margin-left: var(--gap-xs);
+}
+
+/* ==================== 表单 ==================== */
+
+.field {
+  margin-bottom: var(--gap-md);
+}
+
+.field-label {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  font-size: var(--fs-cap);
+  color: var(--text-secondary);
+  margin-bottom: var(--gap-xs);
+}
+
+.field input,
+.field textarea,
+.field .picker-value {
+  background: var(--bg-page);
+  border-radius: var(--radius);
+  font-size: var(--fs-body);
+  width: 100%;
+  box-sizing: border-box;
+}
+
+/* 小程序 input 默认高度装不下 28rpx 文字 + 上下内边距，会把字形裁掉一截 */
+.field input {
+  height: 88rpx;
+  line-height: 88rpx;
+  padding: 0 24rpx;
+}
+
+.field textarea {
+  min-height: 180rpx;
+  padding: 20rpx 24rpx;
+}
+
+.field .picker-value {
+  padding: 20rpx 24rpx;
+}
+
+.field .picker-value.placeholder {
+  color: var(--text-light);
+}
+
+.field-hint {
+  font-size: var(--fs-micro);
+  color: var(--text-light);
+  margin-top: var(--gap-xs);
+  line-height: 1.5;
+}
+
+.field-error {
+  font-size: var(--fs-micro);
+  color: var(--danger);
+  margin-top: var(--gap-xs);
+}
+
+.field-row {
+  display: flex;
+  gap: var(--gap-sm);
+}
+
+.field-row .field {
+  flex: 1;
+}
+
+/* ==================== 状态标记 ==================== */
+
+.chip {
+  display: inline-flex;
+  align-items: center;
+  padding: 4rpx 14rpx;
+  border-radius: var(--radius-pill);
+  font-size: var(--fs-micro);
+  line-height: 1.6;
+}
+
+.chip-measured {
+  background: #EAF4FF;
+  color: #3D7EB5;
+}
+
+.chip-estimated {
+  background: #F1EEF9;
+  color: #6B5CA5;
+}
+
+.chip-missing {
+  background: #F2F3F5;
+  color: var(--text-light);
+}
+
+.chip-warn {
+  background: #FFF3E0;
+  color: #B26A00;
+}
+
+.notice {
+  padding: 20rpx 24rpx;
+  border-radius: var(--radius);
+  font-size: var(--fs-cap);
+  line-height: 1.6;
+  margin-bottom: var(--gap-md);
+}
+
+.notice-info {
+  background: var(--primary-light);
+  color: #3D7EB5;
+}
+
+.notice-warn {
+  background: #FFF7E8;
+  color: #A9701A;
+}
+
+.notice-danger {
+  background: #FDECEC;
+  color: #C0392B;
+}
+
+.notice-success {
+  background: #EAF7EF;
+  color: #3E8E5A;
+}
+
+/* 固定在底部的操作条 */
+.action-bar {
+  position: fixed;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  padding: 16rpx 24rpx calc(16rpx + env(safe-area-inset-bottom)) 24rpx;
+  background: rgba(255, 255, 255, 0.96);
+  border-top: 1rpx solid var(--border);
+  display: flex;
+  gap: var(--gap-sm);
+  z-index: 10;
+}
+
+.action-bar .btn {
+  flex: 1;
+}
+
+.has-action-bar {
+  padding-bottom: calc(160rpx + env(safe-area-inset-bottom));
 }

@@ -1,0 +1,81 @@
+<view class="container">
+  <view class="card">
+    <view class="card-title">
+      <view class="card-title-icon"></view>
+      <text>本地数据</text>
+    </view>
+    <view class="info-line">{{storeInfo}}</view>
+
+    <view class="btn-row">
+      <view class="btn btn-primary {{running ? 'btn-disabled' : ''}}" bindtap="runChecks">运行自检</view>
+      <view class="btn btn-secondary" bindtap="copyReport">复制报告</view>
+    </view>
+
+    <view wx:if="{{summary}}" class="summary">
+      通过 {{summary.passed}} · 失败 {{summary.failed}} · 跳过 {{summary.skipped}}
+    </view>
+  </view>
+
+  <view class="card">
+    <view class="card-title">
+      <view class="card-title-icon"></view>
+      <text>云端历史迁移</text>
+    </view>
+    <view class="btn-row">
+      <view class="btn btn-secondary" bindtap="previewMigration">预览云端数据</view>
+      <view class="btn btn-secondary" bindtap="runMigration">执行迁移</view>
+    </view>
+
+    <view wx:if="{{migrationPreview}}" class="preview">
+      <view class="info-line">档案 {{migrationPreview.profile}} · 体重 {{migrationPreview.bodyRecords}} · 训练 {{migrationPreview.workoutLogs}} · 饮食 {{migrationPreview.foodLogs}}</view>
+      <view class="info-line">其中 {{migrationPreview.foodLogsMissingMacros}} 条饮食记录缺少营养素</view>
+    </view>
+
+    <view wx:for="{{migrationIssues}}" wx:key="code" class="issue {{item.level}}">{{item.message}}</view>
+
+    <view wx:if="{{migrationDone}}" class="preview">
+      <view class="info-line">{{migrationDone.ok ? '迁移成功' : '迁移未写入'}}</view>
+      <view wx:if="{{migrationDone.summary}}" class="info-line">新增：体重 {{migrationDone.summary.bodyRecords}} · 训练 {{migrationDone.summary.workoutLogs}} · 饮食 {{migrationDone.summary.foodLogs}}</view>
+      <view wx:for="{{migrationDone.errors}}" wx:key="*this" class="issue error">{{item}}</view>
+    </view>
+  </view>
+
+  <view class="card">
+    <view class="card-title">
+      <view class="card-title-icon"></view>
+      <text>备份与恢复</text>
+    </view>
+    <view class="btn-row">
+      <view class="btn btn-secondary" bindtap="exportBackup">导出备份文件</view>
+      <view class="btn btn-secondary" bindtap="importBackup">从文件导入</view>
+    </view>
+    <view class="btn-row">
+      <view class="btn btn-secondary" bindtap="runQuotaProbe">配额压测</view>
+    </view>
+
+    <view wx:if="{{backupList.length}}" class="preview">
+      <view class="info-line">本地备份（导入前自动生成）：</view>
+      <view wx:for="{{backupList}}" wx:key="key" class="backup-item" data-key="{{item.key}}" bindtap="restoreBackup">
+        <text>{{item.createdAt}}</text>
+        <text class="backup-action">恢复</text>
+      </view>
+    </view>
+  </view>
+
+  <view class="card">
+    <view class="card-title">
+      <view class="card-title-icon"></view>
+      <text>自检结果</text>
+    </view>
+    <view wx:for="{{results}}" wx:key="name" class="result {{item.status}}">
+      <view class="result-head">
+        <text class="result-name">{{item.name}}</text>
+        <text class="result-status">{{item.status}}</text>
+      </view>
+      <view class="result-detail">{{item.detail}}</view>
+    </view>
+    <view wx:if="{{!results.length}}" class="empty-state">
+      <text>点击「运行自检」开始</text>
+    </view>
+  </view>
+</view>

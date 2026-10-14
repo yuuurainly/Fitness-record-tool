@@ -1,5 +1,7 @@
 {
-  "navigationBarTitleText": "Xlover",
-  "usingComponents": {},
+  "navigationBarTitleText": "今日",
+  "usingComponents": {
+    "macro-bar": "/components/macro-bar/index"
+  },
   "enablePullDownRefresh": true
 }

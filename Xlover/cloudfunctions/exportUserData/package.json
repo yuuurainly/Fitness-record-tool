@@ -1,0 +1,9 @@
+{
+  "name": "exportUserData",
+  "version": "1.0.0",
+  "description": "只读导出当前用户的云端历史数据（分页）",
+  "main": "index.js",
+  "dependencies": {
+    "wx-server-sdk": "~3.0.1"
+  }
+}

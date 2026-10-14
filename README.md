@@ -1,299 +1,288 @@
-# Xlover 3.0 · 个人健康管家（多端 Monorepo）
+# 食愈力 pro
 
-[![Node.js](https://img.shields.io/badge/Node.js-20-339933?logo=nodedotjs)](https://nodejs.org/)
-[![Android](https://img.shields.io/badge/Android-8.0+-34A853?logo=android)](https://www.android.com/)
-[![WeChat MiniProgram](https://img.shields.io/badge/小程序-微信-07C160?logo=wechat)](https://developers.weixin.qq.com/miniprogram/dev/framework/)
-[![Express](https://img.shields.io/badge/backend-Express-000000?logo=express)](https://expressjs.com/)
-[![SQLite](https://img.shields.io/badge/database-SQLite-003B57?logo=sqlite)](https://www.sqlite.org/)
-[![Cloudflare](https://img.shields.io/badge/deploy-Cloudflare%20Tunnel-F38020?logo=cloudflare)](https://www.cloudflare.com/products/tunnel/)
-[![License](https://img.shields.io/badge/license-MIT-green)](#license)
+> 一个只在你自己手机上运行的微信小程序：算清楚每天该吃多少、记清楚每天吃了多少、看着自己慢慢变好。
 
-> **Xlover** 是一套面向个人用户的轻量级健康管理全栈项目：记录每日饮食/运动/体重、智能分配宝箱奖励、每日任务与积分系统、多端数据实时同步。
-> 后端 + 原生 Android App + 微信小程序端 + 部署方案 **一个仓库全部搞定**。
+所有数据保存在手机本地，运行时不发起任何网络请求——没有服务器、没有域名、没有云开发、没有月费。
 
 ---
 
-## ✨ 功能亮点
+## 目录
 
-| 模块 | 功能 |
-|------|------|
-| 🍽️ 饮食记录 | 136+ 中文食物库，一键录入卡路里/蛋白质/碳水/脂肪 |
-| 🏃 运动消耗 | 44+ 常见运动，记录时长自动计算消耗热量 |
-| 📈 体重趋势 | 每日录入体重，生成折线趋势图 |
-| 🎁 宝箱系统 | 按健康目标完成度，开出积分/成就/勋章奖励 |
-| ✅ 每日任务 | 自定义任务清单，每日自动重置 |
-| 💬 实时 WebSocket | 多端消息实时推送（例如：打卡宝箱即时弹窗） |
-| 🖼️ 图形化启动器（Windows） | Tkinter 一键启动后端 + Cloudflare 公网隧道 |
-| 🌐 Cloudflare 公网部署 | 零备案 / 零公网 IP / 自带 HTTPS / 免费 |
-
----
-
-## 🏗️ 架构（最终部署形态）
-
-```
-   📱 Android 原生 App (Kotlin+Compose)      📱 微信小程序端
-           │                                           │
-           │  HTTPS / WSS (REST + WebSocket)          │
-           ▼                                           ▼
-     ┌──────────────────────────────────────────────────────┐
-     │   🌐 Cloudflare 全球 CDN (xlover.你的域名.com)        │
-     │      HTTPS 证书 / DDoS 防护 / 全球 300+ 边缘节点       │
-     └──────────────────────────────────────────────────────┘
-                           │ 加密隧道（出站 7844/UDP）
-                           ▼
-     ┌──────────────────────────────────────────────────────┐
-     │  🏠 小主机 (Debian 12 · x86 N100 · 6W 24h 在线)       │
-     │    ├─ PM2 ─ cloudflared（Cloudflare Tunnel 进程）     │
-     │    └─ PM2 ─ Node.js v20 ─ Express + better-sqlite3    │
-     │               └─ SQLite: database/xlover.db           │
-     └──────────────────────────────────────────────────────┘
-```
+- [这是什么](#这是什么)
+- [功能](#功能)
+- [设计原则](#设计原则)
+- [营养计算模型](#营养计算模型)
+- [数据与存储](#数据与存储)
+- [快速开始](#快速开始)
+- [目录结构](#目录结构)
+- [测试](#测试)
+- [仓库中的其它部分](#仓库中的其它部分)
+- [已知限制](#已知限制)
 
 ---
 
-## 📁 目录结构（单主分支 Monorepo · 目录隔离）
+## 这是什么
+
+一个个人自用的**增肌/减脂 + 饮食记录**微信小程序。基于开源项目 [Xlover 3.0](https://github.com/534707453/xlover-3.0) 的小程序改造而来，去掉了社交与云依赖，重做成单人的本地优先健身工具。
+
+和原版的区别：
+
+| | 原版 Xlover 小程序 | 本项目 |
+|---|---|---|
+| 定位 | 自律监督打卡 | 个人健身 / 饮食管理 |
+| 后端 | 微信云开发（云函数 + 云数据库） | 无，全部本机 |
+| 网络请求 | 每次操作都调云函数 | **零** |
+| 营养数据 | 只有热量 | 热量 + 碳水 / 蛋白质 / 脂肪 |
+| 计算 | 写死科学公式、无活动系数 | BMR / TDEE + 系数档位 + 双模式 |
+| 数据备份 | 无 | JSON 导出 / 导入 / 回滚 |
+
+---
+
+## 功能
+
+主导航 5 个 tab：**今日 / 饮食 / 训练 / 统计 / 我的**。另有 4 个二级页面：身体资料、营养计划、数据管理、数据自检。
+
+### 今日
+今日目标、已摄入、剩余热量；三大营养素进度条；今日训练摘要；最近体重与短期变化；四个快捷记录入口。几秒内看清今天的状态。
+
+### 身体资料
+性别、年龄、身高、当前体重、体脂率、腰围、目标体重与日期、日常活动水平。输入即时估算 BMR / TDEE / BMI，并列出本次改动会影响哪些目标。改动只作用于今天及以后。
+
+### 营养计划
+- 减脂 / 增肌切换（**先给出新旧对比弹窗，确认后才生效**）
+- BMR、TDEE、目标热量三档展示
+- 用滑块调整目标热量比例
+- 系数优先 ⇄ 目标热量优先两种模式，**并列展示差异**
+- 每日三大营养素目标；计算公式、活动系数、系数档位、更新时间全部可见
+- 保存后刷新"今天"的目标快照；**历史快照不可改写**
+
+### 训练
+最近 28 天平均每周训练时长 → 推荐系数档位（附推荐理由）；数据不足时明确说明原因并要求手动选择，不凭空生成；可手动切档或使用自定义系数；记录训练类型 / 日期 / 时长，自动按 MET 估算消耗；训练历史可删除。
+
+> 训练消耗只是估算参考，**不会从每日热量目标里扣减**——活动系数已经包含训练基线，两者相加会重复计算。
+
+### 饮食
+内置 136 条含三大营养素的食物库（每 100g），支持搜索与分类筛选；输入克数实时换算热量与营养素；按早 / 午 / 晚 / 加餐记录；点记录可改重量或删除；当日摄入与目标的差距一目了然。自定义食物会自动存下来，下次可直接搜到。
+
+### 统计
+体重折线趋势、每日热量摄入（带**逐日**目标刻度、超标标红）、营养素完成度、训练时长分布、历史目标 vs 实际结果。图表都有单位标注，没有数据的日期不画线。
+
+### 数据管理
+导出 JSON（文件 / 剪贴板）、从文件导入、导入前自动备份、校验失败不写入、本地备份可回滚、数据版本与占用一览。
+
+---
+
+## 设计原则
+
+这几条贯穿全部代码，改代码时请一起守住：
+
+1. **本地优先**。核心功能不依赖任何服务器。唯一的云调用在「数据自检」页，且由用户主动触发。
+2. **实测与估算分开标注**。每个数值都带 `basis`：`measured`（实测）/ `user-input`（用户设定）/ `estimated`（公式估算）/ `derived`（换算得出）。
+3. **不覆盖历史**。目标快照按日期冻结，切换计划只影响今天；改体重不会重写历史测量；导入用"合并"而非静默替换。
+4. **数据缺失就是缺失**。历史记录没有营养素时存 `null` 而不是 `0`，界面显示"数据未记录"，不污染趋势。
+5. **计算与存储分离**。`utils/nutrition.js` 是纯函数，不碰 `wx`，可以直接用 Node 跑测试。
+
+---
+
+## 营养计算模型
+
+### 基础代谢 BMR（Mifflin-St Jeor 公式，估算值）
 
 ```
-Xlover3.0/
-├── Xlover-Server/                 ← 🟢 后端（Node20 + Express + SQLite）
-│   ├── src/
-│   │   ├── index.js               # 主入口（Express + WebSocket）
-│   │   ├── routes/                # 认证/用户/饮食/运动/体重/任务/宝箱/Settings
-│   │   ├── middleware/            # JWT 鉴权/错误处理
-│   │   ├── websocket/             # 实时消息推送
-│   │   ├── cron/                  # 每日任务自动重置（node-cron）
-│   │   └── config/db.js           # SQLite 单例配置
-│   ├── database/
-│   │   ├── init.js                # 建表迁移脚本（幂等）
-│   │   ├── reset.js               # 数据库重置（自动备份）
-│   │   └── seedFoods.js           # 136+ 中文食物库种子
-│   ├── Xlover启动器.pyw           # ✨ Windows GUI 启动器（Tkinter）
-│   ├── 启动Xlover服务.bat         #   GUI 启动入口
-│   └── package.json
-│
-├── Xlover-Android/                ← 🤖 原生 Android App
-│   ├── app/src/main/java/com/xlover/app/
-│   │   ├── data/                  # Room DB / DataStore / Retrofit API
-│   │   ├── di/                    # Hilt 依赖注入
-│   │   ├── domain/                # UseCase / Repository 接口
-│   │   └── ui/                    # Jetpack Compose 各页面
-│   └── build.gradle.kts
-│
-├── Xlover/                        ← 💬 微信小程序端
-│   ├── miniprogram/               # 小程序页面（首页/记录/任务/进度/我的）
-│   └── cloudfunctions/            # 腾讯云函数（可选：短信/微信支付）
-│
-├── deploy/
-│   ├── cloudflare-tunnel/         # ☁️ Windows / 小主机 Cloudflare Tunnel 部署脚本
-│   │   ├── 00-快速临时隧道.bat    # 免注册 trycloudflare.com
-│   │   ├── 01-登录并创建隧道.bat  # 正式 Named Tunnel + 固定域名
-│   │   └── config.yml
-│   └── migrate-to-mini-host/      # 🚚 小主机迁移包（强烈推荐）
-│       ├── 迁移总览.md
-│       ├── 01-小主机选购与系统安装.md   # N100 推荐 + Debian12 安装
-│       ├── 02-环境初始化.sh             # Node20 + PM2 + cloudflared
-│       ├── 03-部署后端服务.sh           # 依赖 + DB 迁移 + PM2 守护
-│       ├── 04-Cloudflare固定域名配置.md # 免费域名 + Named Tunnel 绑定
-│       ├── 05-日常运维与备份恢复.md     # PM2 速查 + crontab 自动备份
-│       ├── ecosystem.config.cjs         # PM2 进程配置
-│       ├── backup-db.sh                 # SQLite 每日自动备份
-│       └── 打包迁移包.bat                # Windows 端一键打包项目
-│
-└── .gitignore                     # 排除数据库/密钥/.gradle/node_modules/logs/binary
+男：10 × 体重kg + 6.25 × 身高cm − 5 × 年龄 + 5
+女：10 × 体重kg + 6.25 × 身高cm − 5 × 年龄 − 161
+```
+
+### 每日总消耗 TDEE
+
+```
+TDEE = BMR × 活动系数
+活动系数：久坐 1.2 / 轻度 1.375 / 中度 1.55 / 高度 1.725 / 极高 1.9
+安全下限：男 1500 kcal，女 1200 kcal
+```
+
+未选择活动水平时**不兜底默认值**，而是明确提示去补全。
+
+### 目标热量
+
+```
+减脂 = TDEE × (1 − 20%)      增肌 = TDEE × (1 + 10%)
+```
+
+比例可调；低于安全下限时抬升并提示；减脂低于 BMR 时额外警告。
+
+### 三大营养素系数（g / kg 体重）
+
+| 每周训练时长 | 碳水 | 蛋白质 | 脂肪 |
+|---|---|---|---|
+| 2–3 小时 | 2.2 | 1.4 | 0.8 |
+| 4–5 小时 | 2.5 | 1.6 | 0.9 |
+| 6–7 小时 | 3.0 | 1.7 | 1.0 |
+| 8–9 小时 | 3.5 | 1.8 | 1.0 |
+
+> **这不是普适的医学标准**，是使用者本人指定的个人偏好规则，可随时改成自定义系数。
+
+### 两种计算模式
+
+**系数优先**：克数 = 体重 × 系数，热量由系数反算
+
+```
+总热量 = 碳水×4 + 蛋白质×4 + 脂肪×9
+```
+
+**目标热量优先**：蛋白质与脂肪仍按系数锁定克数，碳水吃剩余热量
+
+```
+碳水 = (目标热量 − 蛋白质×4 − 脂肪×9) ÷ 4
+```
+
+若蛋白 + 脂肪的热量已超过目标，返回**冲突错误**并说明超出多少，**不会静默修改你的系数或目标**。
+
+两种模式的结果并列展示并给出差值，由你决定用哪个。
+
+---
+
+## 数据与存储
+
+全部使用微信小程序本地存储，命名空间 `xlover.v1.*`（当前数据格式 v1）。
+
+| 数据 | 键 | 说明 |
+|---|---|---|
+| 身体资料 | `xlover.v1.profile` | 单项 |
+| 营养计划 | `xlover.v1.nutritionPlan` | 单项 |
+| 体重历史 | `xlover.v1.bodyRecords` | 按日期去重 |
+| 饮食记录 | `xlover.v1.foodLogs.<YYYY-MM>` | **按月分片**，避免单键触顶 |
+| 训练记录 | `xlover.v1.workoutLogs.<YYYY-MM>` | 按月分片 |
+| 目标快照 | `xlover.v1.targets.<YYYY-MM-DD>` | 按日冻结，历史不可改写 |
+| 自定义食物 | `xlover.v1.customFoods` | |
+| 导入前备份 | `xlover.v1.backup.preImport.*` | 滚动保留 3 份 |
+
+安全机制：
+
+- **导入**：先整体校验（格式 → 版本 → 校验和 → 每条记录），任何一条不合法就整体拒绝，**不写入任何内容**；校验通过才留备份再合并。默认"合并"模式，本地已有记录不会被覆盖。
+- **结构升级**：`schemaVersion` 高于当前小程序时拒绝启动且不动数据；需要升级且已有数据时，**自动留一份升级前备份**。
+- **容量**：微信本地存储上限约 10MB。体重记录在单键里，约 8000 条（≈20 年）后接近单键上限，届时需按年分片。
+
+> 微信本地存储随小程序删除 / 清除缓存而丢失，且同一 AppID 的数据只在这台手机上。**导出备份是唯一的数据保全手段**，请定期使用「数据管理 → 导出」。
+
+---
+
+## 快速开始
+
+### 环境
+
+- [微信开发者工具](https://developers.weixin.qq.com/miniprogram/dev/devtools/download.html)（Stable）
+- Node.js ≥ 20（仅用于跑测试，小程序本身无依赖）
+
+### 导入项目
+
+1. 开发者工具 → 导入项目 → 选择本仓库的 `Xlover/` 目录
+2. AppID 填你自己的小程序 AppID（当前配置为 `wxb39987420ee9f612`）
+3. 编译即可运行
+
+> `Xlover/project.config.json` 里的 `appid` 需要换成你自己的。用别人的 AppID 会报"登录用户不是该小程序的开发者"。
+>
+> 只是想看效果又没有 AppID 时，可以把 `appid` 临时改成 `touristappid` 用游客模式打开——但游客模式下部分运行时工具不可用。
+
+### 部署到手机
+
+- **临时试用**：开发者工具 → 预览 → 扫码
+- **长期使用**：上传为体验版 → 在 [mp.weixin.qq.com](https://mp.weixin.qq.com)「管理 → 版本管理」把开发版本**选为体验版** → 把自己加为「体验成员」→ 扫体验版二维码，之后可从微信「最近使用的小程序」直接进入
+
+### 不需要配置的东西
+
+「服务器域名」「业务域名」**留空即可**，本项目不发起任何网络请求。
+
+---
+
+## 目录结构
+
+```
+Xlover/                         微信小程序（本项目主体）
+├── miniprogram/
+│   ├── app.js / app.json / app.wxss     入口、路由、设计令牌
+│   ├── components/                      通用组件（营养素进度条、分段控件）
+│   ├── data/foodLibrary.js              内置 136 条食物库（含三大营养素）
+│   ├── pages/
+│   │   ├── index/        今日概览
+│   │   ├── food/         饮食记录
+│   │   ├── exercise/     训练与系数档位
+│   │   ├── progress/     统计与历史
+│   │   ├── profile/      我的（入口页）
+│   │   ├── body/         身体资料
+│   │   ├── plan/         营养计划
+│   │   ├── data/         数据管理
+│   │   └── diagnostics/  数据自检（存储配额、备份链路、云端迁移）
+│   └── utils/
+│       ├── nutrition.js    纯计算引擎（BMR / TDEE / 系数 / 双模式）
+│       ├── plan.js         计划编译、快照生成、目标切换预览
+│       ├── metrics.js      读模型：把原始记录聚合成页面可渲染的结构
+│       ├── storage.js      本地数据层：命名空间、分片、版本、导入导出
+│       ├── backup.js       备份 / 导入 / 恢复（含校验和与导入前备份）
+│       ├── foodLibrary.js  食物检索与按克换算
+│       ├── migrateCloud.js 云端历史数据迁移
+│       ├── selfCheck.js    真机自检
+│       └── appStore.js     数据层单例
+├── cloudfunctions/exportUserData/  只读分页导出云端历史（可选，需手动部署）
+└── tests/                          213 个自动化测试
 ```
 
 ---
 
-## 🚀 快速开始（3 种方式）
-
-### 方式 A · Windows GUI 一键启动（最傻瓜，新手上手 10 秒）
-
-**适合：本机开发调试 / 临时演示**
-
-```powershell
-双击运行：
-  Xlover-Server\启动Xlover服务.bat
-  → 点 [安装依赖]  →  [重置数据库]  →  [启动后台服务]
-  → 左侧 ☁️ Cloudflare 面板  →  [一键启动快速公网隧道]
-  → 复制 https://xxx.trycloudflare.com 到 App 服务器地址
-```
-
-✅ 内置：自动装 Node v20 + 自动编译 better-sqlite3 + 自动下载 cloudflared.exe + 自动解析公网域名
-
----
-
-### 方式 B · 本地后端开发（命令行）
-
-**适合：后端接口开发 / 测试**
+## 测试
 
 ```bash
-# 1. 环境（需要 Node.js 20 LTS，其他版本会导致 better-sqlite3 ABI 不兼容）
-node -v   # 必须是 v20.x.x
-
-# 2. 进入后端目录
-cd Xlover-Server
-
-# 3. 装依赖（国内加速镜像）
-npm config set registry https://registry.npmmirror.com
-npm install
-
-# 4. 初始化数据库（结构 + 食物库种子）
-npm run init-db      # 建表（幂等）
-npm run seed-foods   # 136+ 中文食物库
-
-# 5. 启动
-npm run dev          # 开发模式（含日志 + 错误堆栈）
-# 或
-npm start            # 生产模式（pm2 start src/index.js）
-
-# 6. 健康检查
-curl http://localhost:3000/health
-# → {"status":"ok","onlineUsers":0}
+node --test "Xlover/tests/*.test.js"
 ```
 
-- 默认端口：`3000`
-- WebSocket 路径：`ws://localhost:3000/ws`
-- 数据库文件：`Xlover-Server/database/xlover.db`
+当前结果：**213 passed / 0 failed**（Node 24 实测；Node 20+ 应可用）。
+
+覆盖范围：
+
+| 测试文件 | 数量 | 内容 |
+|---|---|---|
+| `nutrition` | 34 | 公式、档位、边界、异常输入 |
+| `storage` | 31 | 版本、校验、快照冻结、导入导出 |
+| `migrateCloud` | 23 | 字段映射、幂等、分页 |
+| `pages` | 23 | 伪造 `wx` 环境跑通每个页面生命周期 |
+| `planMetrics` | 21 | 计划编译、读模型口径 |
+| `backup` | 18 | 校验和、导入阶段、回滚 |
+| `foodLibrary` | 16 | 食物库完整性、按克换算 |
+| `wxAdapter` | 13 | 伪 `wx` 存储 / 文件链路与失败分支 |
+| `acceptance` | 34 | 独立算式核对、数据安全矩阵、死控件扫描 |
+
+`acceptance.test.js` 里的期望值是用**独立写出的算式**现算的，不是调用被测函数生成，避免"用实现验证实现"。
 
 ---
 
-### 方式 C · 迁移到低功耗小主机长期运行（💎 强烈推荐）
+## 仓库中的其它部分
 
-**适合：24 小时在线 · 月电费 3-5 元 · 固定自有域名永久不变**
+本仓库源自 Xlover 3.0 的多端 monorepo，以下目录**属于原项目历史资产，本项目未做任何改动**，与小程序当前功能无关：
 
-推荐硬件：**畅网 N100 迷你主机（¥250-350，8GB+256GB SSD）**，功耗 6-15W。
+| 目录 | 内容 |
+|---|---|
+| `Xlover-Server/` | Node 20 + Express + SQLite 后端，服务 Android 端 |
+| `Xlover-Android/` | Kotlin + Jetpack Compose 原生 Android 应用 |
+| `database/` | 独立的 SQLite 重建脚本（`node:sqlite`） |
+| `deploy/` | Cloudflare Tunnel 与低功耗小主机部署文档 |
+| `docs/` | 原项目的 Android 开发计划 |
 
-> 👉 完整教程见 [deploy/migrate-to-mini-host/迁移总览.md](deploy/migrate-to-mini-host/)
-
-1. 在 Windows 上运行 `deploy/migrate-to-mini-host/打包迁移包.bat`（含全量数据库）
-2. 传到小主机 → `bash 02-环境初始化.sh` → `bash 03-部署后端服务.sh`
-3. 浏览器注册 **¥6 首年的 .top 免费/低价域名** → Cloudflare 创建固定域名隧道
-4. 以后所有运维：`pm2 status / pm2 logs / backup-db.sh`（文档05）
-
----
-
-## 🧩 API 速览
-
-> 详细接口文档，后端启动后访问 `http://localhost:3000/health` 验证；路由源码见 `Xlover-Server/src/routes/`。
-
-| 路由前缀 | 模块 | 主要接口 |
-|----------|------|----------|
-| `/api/auth` | 认证 | `POST /register`、`POST /login`（返回 JWT）、`POST /logout` |
-| `/api/users` | 用户 | `GET/PUT /me`、身高/体重/目标设置 / 设置项 |
-| `/api/foods` | 食物库 | `GET /?q=鸡蛋`（搜索）、`GET /categories` |
-| `/api/diets` | 饮食记录 | `GET /date/2026-08-30`、`POST /`、`PUT /:id`、`DELETE /:id` |
-| `/api/exercises` | 运动库 | `GET /` |
-| `/api/workouts` | 运动记录 | `GET /today`、`POST /` |
-| `/api/weights` | 体重趋势 | `GET /range?start=&end=`、`POST /` |
-| `/api/tasks` | 每日任务 | `GET /today`、`POST /`、`PATCH /:id/complete` |
-| `/api/chests` | 宝箱 | `GET /available`、`POST /:id/open`（开宝箱）、`GET /records` |
-| `/api/settings` | 设置 | `GET /`、`PUT /`（通知/主题/目标宏量营养素） |
-| `/health` | 健康检查 | `GET /`（返回 status / onlineUsers） |
-| `/ws` | WebSocket | 登录后 join room，任务/宝箱变更实时推送 |
-
-### 请求示例
-
-```bash
-# 1. 注册
-curl -X POST http://localhost:3000/api/auth/register \
-  -H "Content-Type: application/json" \
-  -d '{"username":"xlover","password":"123456","nickname":"小绿"}'
-
-# 2. 登录（拿 JWT）
-curl -X POST http://localhost:3000/api/auth/login \
-  -H "Content-Type: application/json" \
-  -d '{"username":"xlover","password":"123456"}'
-# → {"token":"Bearer eyJhbG...","user":{...}}
-
-# 3. 保存今天的早餐
-curl -X POST http://localhost:3000/api/diets \
-  -H "Authorization: Bearer eyJhbG..." \
-  -H "Content-Type: application/json" \
-  -d '{"date":"2026-08-30","mealType":"breakfast","foodId":1,"grams":100}'
-
-# 4. 开宝箱
-curl -X POST http://localhost:3000/api/chests/3/open \
-  -H "Authorization: Bearer eyJhbG..."
-```
+小程序不需要它们也能完整运行。
 
 ---
 
-## 🛠️ 技术栈
+## 已知限制
 
-### 后端（Xlover-Server）
-| 组件 | 选型 | 作用 |
-|------|------|------|
-| 运行时 | **Node.js 20 LTS** | 统一版本（避免 better-sqlite3 NODE_MODULE_VERSION 错位） |
-| 框架 | **Express 4** | HTTP 路由 + 中间件 |
-| 数据库 | **SQLite3 + better-sqlite3** | 文件型单库，零运维（`database/xlover.db`） |
-| 鉴权 | **JWT (jsonwebtoken + bcrypt)** | 无状态登录 |
-| 实时 | **ws** | 原生 WebSocket（/ws 路径） |
-| 定时任务 | **node-cron** | 每日 00:05 重置任务状态 + 生成次日宝箱池 |
-| 跨域 / 参数 | **cors / body-parser / helmet** | 安全 & 通用中间件 |
-| 日志 | **morgan + Winston** | 访问日志 + 错误日志 |
-| 进程守护 | **PM2** | 24h 在线 + 开机自启 + 日志轮转 |
-| 部署 | **Cloudflare Tunnel** | 免费、免备案、自带 HTTPS |
-
-### Android（Xlover-Android）
-- Kotlin + **Jetpack Compose**（声明式 UI）
-- **Hilt** 依赖注入
-- **Retrofit + OkHttp**（REST API，自带 JWT 拦截器）
-- **Room** 本地缓存 + **DataStore (Proto)** 用户偏好
-- **Navigation Compose** 路由
-- Coil 图片加载 / WorkManager 后台同步
-
-### 小程序（Xlover）
-- 原生小程序 SDK + Vant Weapp 组件库
-- 腾讯云函数（可选：微信支付、短信验证码、订阅消息推送）
+- **体重记录未分片**，约 8000 条后接近单键上限（见「数据与存储」）。
+- **本地存储会随清除缓存丢失**，务必定期导出备份。
+- **换 AppID 会隔离数据**：不同 AppID 是不同的「小程序」，本地存储互不相通。换 AppID 前后请用导出 / 导入搬迁。
+- **训练消耗按 MET 估算**，不精确，也刻意不参与热量抵扣。
+- **食物库只有 136 条**，没有"常用 / 最近"排序；缺失的食物请用自定义食物补充。
+- tab 图标使用 emoji（项目无图标库，为保持零依赖与真机兼容）。
+- 仓库中仍保留若干早期页面（引导、旧记录、任务、消息、提醒、奖励）代码但未接入导航；`utils/util.js` 中的旧热量函数已标注 `@deprecated`，请改用 `utils/nutrition.js`。
 
 ---
 
-## 🌐 部署 FAQ
+## License
 
-**Q: 为什么不用 Docker？**
-Node + SQLite 单体服务，PM2 就够用，Docker 多一层抽象反而带来卷映射/权限/备份复杂度。需要 Docker 时可自行在 `Xlover-Server/` 下加 `Dockerfile`。
-
-**Q: 为什么 Cloudflare Tunnel 是最终方案，不做 frp/chmlfrp？**
-- 完全免费 + 全球 300+ 节点 + 自带 HTTPS 证书
-- 零入站端口开放，仅出站 UDP/TCP 连接，更安全
-- 可以绑定「自有域名永久固定」，不需要每次改地址
-
-**Q: 临时域名每次重启变？**
-对，trycloudflare.com 是会话绑定的。长期使用请走「固定自有域名」流程（[文档 04](deploy/migrate-to-mini-host/04-Cloudflare固定域名配置.md)）。
-
-**Q: 数据丢了怎么办？**
-SQLite 是本地文件，`backup-db.sh` 会每日凌晨 3 点备份到 `database/backups/xlover.db.YYYYMMDD-HHMMSS.gz`，保留 30 天。
-
----
-
-## 📝 Roadmap
-
-- [x] 后端：23 张表 + 食物/运动种子 + JWT + WebSocket + node-cron 每日重置
-- [x] GUI 启动器（Windows Tkinter）+ 一键 Cloudflare 公网隧道
-- [x] 部署：Cloudflare Tunnel（临时域名 + 正式隧道 + 自有域名）
-- [x] 迁移包：Debian 小主机 5 份文档 + 3 个脚本 + PM2 配置
-- [x] Android 端：主页/记录/任务/进度/我的 5 大板块（Compose）
-- [x] 小程序端：页面 + 云函数模板
-- [ ] 接入 AI 食物识别（拍照录入饮食）
-- [ ] 接入智能体对话（体重/饮食趋势咨询）
-- [ ] GitHub Actions：Docker 镜像自动发布
-
----
-
-## 🤝 贡献
-
-1. 新开一个分支：`git checkout -b feature/xxx`
-2. 改完提交：`npm run dev` 跑一遍后端，确认 `/health` OK + 登录正常
-3. 推送 + 开 Pull Request：标题格式 `feat: 你做了什么` / `fix: 你修了什么`
-
----
-
-## 📄 License
-
-**MIT** — 你可以自由用于个人项目。商业使用时，请参考各依赖包的许可证。
-
----
-
-<p align="center">
-  <strong>💚 长期维护。Enjoy your Xlover！</strong>
-</p>
+MIT。原项目版权归其作者所有，本改造版保留原许可。

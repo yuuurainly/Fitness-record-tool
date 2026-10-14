@@ -1,3 +1,10 @@
+/**
+ * 旧版通用工具，仅由尚未迁移的老页面（guide / weight / record）使用。
+ *
+ * 注意：下面的热量相关函数是早期实现，其中 calculateCalories 写死了女性公式、
+ * 且不含活动水平兜底，已经被 utils/nutrition.js 取代（新页面一律用 nutrition.js）。
+ * 这里保留是为了不破坏老页面，新增代码请勿再引用。
+ */
 const formatTime = date => {
   const year = date.getFullYear()
   const month = date.getMonth() + 1
@@ -35,6 +42,7 @@ const calculateBMI = (weight, height) => {
   return (weight / (h * h)).toFixed(1)
 }
 
+/** @deprecated 请使用 utils/nutrition.js 的 calculateBMR / calculateTDEE */
 const calculateCalories = (weight, height, age, gender, activityLevel) => {
   // Mifflin-St Jeor 公式
   let bmr
@@ -52,6 +60,7 @@ const calculateCalories = (weight, height, age, gender, activityLevel) => {
   return Math.round(bmr * (multiplier[activityLevel] || 1.375))
 }
 
+/** @deprecated 请使用 utils/nutrition.js 的 estimateTrainingCalories */
 const calculateExerciseCalories = (type, duration, weight) => {
   const metValues = {
     running: 9.8,

@@ -1,0 +1,94 @@
+<view class="container">
+
+  <view class="notice notice-info">
+    所有记录保存在本机，没有云端同步。删除小程序或清除微信缓存会导致数据丢失，建议定期导出备份。
+  </view>
+
+  <view class="notice {{lastAction.ok ? 'notice-success' : 'notice-danger'}}" wx:if="{{lastAction}}">
+    {{lastAction.text}}
+  </view>
+
+  <!-- 数据概览 -->
+  <view class="card">
+    <view class="card-head"><text class="h2">数据概览</text></view>
+    <view class="row">
+      <text class="row-label">体重记录</text>
+      <text class="row-value num">{{counts.body}} 条</text>
+    </view>
+    <view class="row">
+      <text class="row-label">饮食记录</text>
+      <text class="row-value num">{{counts.food}} 条</text>
+    </view>
+    <view class="row">
+      <text class="row-label">训练记录</text>
+      <text class="row-value num">{{counts.workout}} 条</text>
+    </view>
+    <view class="row">
+      <text class="row-label">目标快照</text>
+      <text class="row-value num">{{counts.snapshots}} 条</text>
+    </view>
+    <view class="row">
+      <text class="row-label">自定义食物</text>
+      <text class="row-value num">{{counts.customFoods}} 条</text>
+    </view>
+    <view class="divider"></view>
+    <view class="row">
+      <text class="row-label">存储占用</text>
+      <text class="row-value num">{{usage.usedKB}} / {{usage.limitSizeKB}} KB</text>
+    </view>
+    <view class="row">
+      <text class="row-label">应用版本 / 数据格式</text>
+      <text class="row-value">{{appVersion}} / v{{schemaVersion}}</text>
+    </view>
+    <view class="row">
+      <text class="row-label">内置食物库</text>
+      <text class="row-value">{{libraryVersion}}（136 条）</text>
+    </view>
+  </view>
+
+  <!-- 导出 -->
+  <view class="card">
+    <view class="card-head">
+      <text class="h2">导出备份</text>
+      <text class="micro">JSON</text>
+    </view>
+    <view class="btn btn-primary" bindtap="exportBackup">导出为文件并分享</view>
+    <view class="btn btn-secondary mt-16" bindtap="exportClipboard">复制到剪贴板</view>
+    <view class="field-hint">文件方式会唤起微信的文件分享，可发给自己保存；剪贴板方式适合粘贴到备忘录。</view>
+  </view>
+
+  <!-- 导入 -->
+  <view class="card">
+    <view class="card-head">
+      <text class="h2">导入恢复</text>
+    </view>
+    <view class="btn btn-secondary" bindtap="importFile">从文件导入</view>
+    <view class="field-hint">
+      导入前会校验文件完整性与数据合法性：校验不通过时不会写入任何内容，本地数据保持不变。确认导入时会自动保存一份导入前备份。
+    </view>
+  </view>
+
+  <!-- 本地备份 -->
+  <view class="card">
+    <view class="card-head">
+      <text class="h2">本地备份</text>
+      <text class="micro">最多保留 3 份</text>
+    </view>
+    <view class="list-item" wx:for="{{backups}}" wx:key="key">
+      <view class="list-main">
+        <view class="list-title">导入前备份</view>
+        <view class="list-desc">{{item.createdAt}}</view>
+      </view>
+      <view class="restore" data-key="{{item.key}}" bindtap="restoreBackup">恢复</view>
+    </view>
+    <view class="meal-empty" wx:if="{{backups.length === 0}}">还没有备份。执行一次导入后会自动生成。</view>
+  </view>
+
+  <!-- 危险操作 -->
+  <view class="card">
+    <view class="card-head"><text class="h2">危险操作</text></view>
+    <view class="btn btn-danger" bindtap="clearAll">清空全部本地数据</view>
+    <view class="field-hint">清空后只能通过之前导出的备份文件恢复。</view>
+  </view>
+
+</view>

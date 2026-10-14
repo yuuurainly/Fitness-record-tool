@@ -1,0 +1,135 @@
+.card-head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  margin-bottom: var(--gap-md);
+}
+
+.energy {
+  display: flex;
+  align-items: flex-end;
+}
+
+.energy-item {
+  flex: 1;
+}
+
+.energy-value {
+  font-size: 44rpx;
+  font-weight: 700;
+  line-height: 1.2;
+}
+
+.energy-item.highlight .energy-value {
+  color: var(--primary);
+}
+
+.energy-label {
+  font-size: var(--fs-micro);
+  color: var(--text-light);
+  margin-top: 4rpx;
+}
+
+.adjust-value {
+  font-size: var(--fs-cap);
+  color: var(--primary);
+  font-weight: 600;
+}
+
+.link {
+  font-size: var(--fs-micro);
+  color: var(--primary);
+}
+
+.diff {
+  margin-top: var(--gap-md);
+  padding-top: var(--gap-sm);
+  border-top: 1rpx solid var(--border);
+}
+
+.diff-row {
+  display: flex;
+  justify-content: space-between;
+  padding: 8rpx 0;
+  font-size: var(--fs-cap);
+  color: var(--text-secondary);
+}
+
+.diff-row.total {
+  border-top: 1rpx solid var(--border);
+  margin-top: 6rpx;
+  padding-top: 12rpx;
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.diff-row .up {
+  color: var(--danger);
+}
+
+.diff-row .down {
+  color: var(--secondary);
+}
+
+.macro-row {
+  display: flex;
+  align-items: center;
+  padding: 18rpx 0;
+  border-bottom: 1rpx solid var(--border);
+}
+
+.macro-row:last-of-type {
+  border-bottom: none;
+}
+
+.dot {
+  width: 14rpx;
+  height: 14rpx;
+  border-radius: 50%;
+  margin-right: var(--gap-sm);
+}
+
+.macro-name {
+  flex: 1;
+  font-size: var(--fs-body);
+}
+
+.macro-grams {
+  font-size: 34rpx;
+  font-weight: 700;
+  margin-right: var(--gap-md);
+}
+
+.unit-sm {
+  font-size: var(--fs-micro);
+  color: var(--text-light);
+  margin-left: 2rpx;
+}
+
+.macro-kcal {
+  font-size: var(--fs-cap);
+  color: var(--text-light);
+  width: 140rpx;
+  text-align: right;
+}
+
+.link-row {
+  margin-top: var(--gap-md);
+  padding: 20rpx 0;
+  text-align: center;
+  font-size: var(--fs-cap);
+  color: var(--primary);
+  background: var(--primary-light);
+  border-radius: var(--radius);
+}
+
+.notice-action {
+  margin-top: 8rpx;
+  font-weight: 600;
+}
+
+.meal-empty {
+  padding: 24rpx 0;
+  font-size: var(--fs-cap);
+  color: var(--text-light);
+}

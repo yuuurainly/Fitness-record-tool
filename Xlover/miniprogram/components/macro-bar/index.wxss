@@ -1,0 +1,83 @@
+.macro {
+  padding: var(--gap-sm) 0;
+}
+
+.macro-head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  margin-bottom: 10rpx;
+}
+
+.macro-label {
+  display: flex;
+  align-items: center;
+  font-size: var(--fs-cap);
+  color: var(--text-secondary);
+}
+
+.dot {
+  width: 14rpx;
+  height: 14rpx;
+  border-radius: 50%;
+  margin-right: 12rpx;
+}
+
+.macro-value {
+  display: flex;
+  align-items: baseline;
+}
+
+.now {
+  font-size: 30rpx;
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.slash {
+  color: var(--text-light);
+  margin: 0 6rpx;
+  font-size: var(--fs-micro);
+}
+
+.goal {
+  font-size: var(--fs-cap);
+  color: var(--text-secondary);
+}
+
+.unit {
+  font-size: var(--fs-micro);
+  color: var(--text-light);
+  margin-left: 4rpx;
+}
+
+.track {
+  height: 12rpx;
+  border-radius: var(--radius-pill);
+  background: var(--track);
+  overflow: hidden;
+}
+
+.fill {
+  height: 100%;
+  border-radius: var(--radius-pill);
+  transition: width 0.25s ease;
+}
+
+.fill.is-over {
+  background: var(--danger) !important;
+}
+
+.macro-foot {
+  font-size: var(--fs-micro);
+  color: var(--text-light);
+  margin-top: 8rpx;
+}
+
+.macro-foot.is-over {
+  color: var(--danger);
+}
+
+.is-unknown .dot {
+  background: #D8DDE4 !important;
+}

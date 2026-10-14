@@ -1,120 +1,154 @@
 <view class="container">
-  <!-- 今日运动总览 -->
-  <view class="card total-card">
-    <view class="total-title">今日运动消耗</view>
-    <view class="total-value">{{totalCalories}} <text class="total-unit">kcal</text></view>
-    <view class="total-breakdown">
-      <view class="breakdown-item">
-        <view class="breakdown-icon">👟</view>
-        <view class="breakdown-value">{{werunStep}} 步</view>
-        <view class="breakdown-label">≈ {{werunCalories}} kcal</view>
-      </view>
-      <view class="breakdown-divider"></view>
-      <view class="breakdown-item">
-        <view class="breakdown-icon">🏃</view>
-        <view class="breakdown-value">{{todayDuration}} min</view>
-        <view class="breakdown-label">≈ {{todayCalories}} kcal</view>
-      </view>
-    </view>
-  </view>
 
-  <!-- 记录运动 -->
+  <!-- 最近 4 周 -->
   <view class="card">
-    <view class="section-header">
-      <view class="card-title">
-        <view class="card-title-icon"></view>
-        <text>记录运动</text>
+    <view class="card-head">
+      <text class="h2">最近 {{stats.windowDays}} 天</text>
+      <text class="micro">按训练记录统计</text>
+    </view>
+    <view class="stat-row">
+      <view class="stat">
+        <view class="stat-value num">{{stats.avgWeeklyHours}}<text class="stat-unit">小时</text></view>
+        <view class="stat-label">平均每周</view>
       </view>
-      <view class="add-type-btn" bindtap="showAddTypeModal">+ 自定义类型</view>
+      <view class="stat">
+        <view class="stat-value num">{{stats.activeDays}}<text class="stat-unit">天</text></view>
+        <view class="stat-label">有训练</view>
+      </view>
+      <view class="stat">
+        <view class="stat-value num">{{stats.totalMinutes}}<text class="stat-unit">分钟</text></view>
+        <view class="stat-label">总时长</view>
+      </view>
+    </view>
+  </view>
+
+  <!-- 档位推荐 -->
+  <view class="card">
+    <view class="card-head">
+      <text class="h2">营养素系数档位</text>
     </view>
 
-    <view class="form-group">
-      <view class="form-label foldable" bindtap="toggleTypes">
-        <text>运动类型</text>
-        <text class="fold-arrow">{{expandTypes ? '收起 ↑' : '展开 ↓'}}</text>
+    <block wx:if="{{recommendation && !recommendation.requiresManual}}">
+      <view class="rec">
+        <view class="rec-main">
+          <view class="rec-title">建议：{{recommendation.bandLabel}}</view>
+          <view class="micro">依据周均 {{recommendation.avgWeeklyHours}} 小时（{{recommendation.activeDays}} 个训练日 / 截至 {{recommendation.referenceDate}}）</view>
+        </view>
+        <view class="btn btn-secondary btn-sm" bindtap="adoptRecommendation">采用</view>
       </view>
-      <view class="exercise-types">
-        <view class="type-tag {{selectedType === item.type ? 'selected' : ''}} {{index >= 4 && !expandTypes ? 'type-hidden' : ''}}" wx:for="{{exerciseTypes}}" wx:key="type" bindtap="selectType" data-type="{{item.type}}">
-          <text class="type-icon">{{item.icon}}</text>
-          <text class="type-name">{{item.name}}</text>
-          <text class="type-met" wx:if="{{item.met}}">MET {{item.met}}</text>
-          <view class="delete-custom" catchtap="deleteCustomType" data-type="{{item.type}}" wx:if="{{item.type.startsWith('custom_')}}">✕</view>
+      <view class="notice notice-warn" wx:if="{{recommendation.warnings.length}}">{{recommendation.warnings[0]}}</view>
+    </block>
+
+    <view class="notice notice-info" wx:elif="{{recommendation}}">
+      {{recommendation.reason}}
+    </view>
+
+    <view class="band-list">
+      <view
+        wx:for="{{bands}}"
+        wx:key="id"
+        class="band {{selectedBandId === item.id && !useCustom ? 'active' : ''}}"
+        data-band="{{item.id}}"
+        bindtap="selectBand"
+      >
+        <view class="band-radio"></view>
+        <view class="band-body">
+          <view class="band-label">{{item.label}}</view>
+          <view class="band-coef num">碳 {{item.carb}} · 蛋 {{item.protein}} · 脂 {{item.fat}} g/kg</view>
         </view>
       </view>
     </view>
 
-    <view class="form-group">
-      <text class="form-label">运动时长 (分钟)</text>
-      <input type="digit" placeholder="请输入运动时长" value="{{duration}}" bindinput="inputDuration" cursor-spacing="{{120}}" />
+    <view class="custom-toggle" bindtap="toggleCustom">
+      <view class="band-radio {{useCustom ? 'active' : ''}}"></view>
+      <text>使用自定义系数（g/kg 体重）</text>
     </view>
 
-    <view class="form-group" wx:if="{{estimatedCalories > 0}}">
-      <text class="form-label">预计消耗</text>
-      <view class="estimated-calories">{{estimatedCalories}} kcal</view>
-    </view>
-
-    <button class="btn btn-primary {{!selectedType || !duration ? 'btn-disabled' : ''}}" bindtap="addExercise">添加记录</button>
-  </view>
-
-  <!-- 今日运动记录 -->
-  <view class="card" wx:if="{{todayExercises.length > 0}}">
-    <view class="card-title">
-      <view class="card-title-icon"></view>
-      <text>今日记录</text>
-    </view>
-    <view class="exercise-list">
-      <view class="exercise-item" wx:for="{{todayExercises}}" wx:key="_id">
-        <view class="exercise-icon">{{item.icon}}</view>
-        <view class="exercise-info">
-          <view class="exercise-name">{{item.typeName}}</view>
-          <view class="exercise-detail">{{item.duration}} 分钟 · {{item.calories}} kcal</view>
+    <view class="custom-body" wx:if="{{useCustom}}">
+      <view class="field-row">
+        <view class="field">
+          <view class="field-label"><text>碳水</text></view>
+          <input type="digit" placeholder="2.5" value="{{custom.carb}}" data-key="carb" bindinput="onCustomInput" />
         </view>
-        <view class="exercise-actions">
-          <button class="btn-point" size="mini" bindtap="openPointModal" data-id="{{item._id}}" data-name="{{item.typeName}}">申请积分</button>
-          <view class="exercise-delete" bindtap="deleteExercise" data-id="{{item._id}}">✕</view>
+        <view class="field">
+          <view class="field-label"><text>蛋白质</text></view>
+          <input type="digit" placeholder="1.6" value="{{custom.protein}}" data-key="protein" bindinput="onCustomInput" />
+        </view>
+        <view class="field">
+          <view class="field-label"><text>脂肪</text></view>
+          <input type="digit" placeholder="0.9" value="{{custom.fat}}" data-key="fat" bindinput="onCustomInput" />
         </view>
       </view>
+      <view class="field-hint">范围 0.5~10 g/kg，保存后今日目标会按新系数重算。</view>
+      <view class="btn btn-secondary btn-sm custom-save" bindtap="saveCustom">保存自定义系数</view>
     </view>
   </view>
-</view>
 
-<!-- 积分申请弹窗 -->
-<view class="modal" wx:if="{{showPointModal}}">
-  <view class="modal-mask" bindtap="closePointModal"></view>
-  <view class="modal-content">
-    <view class="modal-title">申请运动积分</view>
-    <view class="form-group">
-      <text class="form-label">运动项目</text>
-      <view class="form-value">{{pointExerciseName}}</view>
+  <!-- 记录训练 -->
+  <view class="card">
+    <view class="card-head">
+      <text class="h2">记录训练</text>
+      <picker mode="date" value="{{form.date}}" end="{{form.date}}" bindchange="onDate">
+        <view class="date-pick">{{form.date}}</view>
+      </picker>
     </view>
-    <view class="form-group">
-      <text class="form-label">申请积分</text>
-      <input type="number" placeholder="请输入积分数值" value="{{pointValue}}" bindinput="inputPointValue" cursor-spacing="{{120}}" />
+
+    <view class="type-grid">
+      <view
+        wx:for="{{types}}"
+        wx:key="key"
+        class="type-item {{selectedType === item.key ? 'active' : ''}}"
+        data-key="{{item.key}}"
+        bindtap="selectType"
+      >
+        <view class="type-name">{{item.name}}</view>
+        <view class="type-met num">MET {{item.met}}</view>
+      </view>
     </view>
-    <view class="modal-actions">
-      <button class="btn btn-secondary" bindtap="closePointModal">取消</button>
-      <button class="btn btn-primary" bindtap="submitPointRequest">提交申请</button>
+
+    <view class="field mt-24">
+      <view class="field-label"><text>时长（分钟）</text></view>
+      <input type="digit" placeholder="例如 45" value="{{form.minutes}}" bindinput="onMinutes" />
+      <view class="preset-row">
+        <view
+          wx:for="{{minutePresets}}"
+          wx:key="*this"
+          class="preset"
+          data-minutes="{{item}}"
+          bindtap="onMinutePreset"
+        >{{item}}'</view>
+      </view>
     </view>
+
+    <view class="kcal-preview" wx:if="{{kcalPreview}}">
+      预计消耗 <text class="num strong">{{kcalPreview.kcal}}</text> kcal
+      <text class="micro">（MET {{kcalPreview.met}} × {{kcalPreview.weightKg}}kg × 时长，估算值，不抵扣每日目标）</text>
+    </view>
+
+    <view class="btn btn-primary mt-24" bindtap="saveTraining">保存训练</view>
   </view>
-</view>
 
-<!-- 添加自定义类型弹窗 -->
-<view class="modal" wx:if="{{showAddType}}">
-  <view class="modal-mask" bindtap="closeAddTypeModal"></view>
-  <view class="modal-content">
-    <view class="modal-title">添加自定义运动</view>
-    <view class="form-group">
-      <text class="form-label">运动名称</text>
-      <input type="text" placeholder="例如：羽毛球" value="{{customTypeName}}" bindinput="inputCustomTypeName" />
+  <!-- 历史 -->
+  <view class="card">
+    <view class="card-head">
+      <text class="h2">训练记录</text>
+      <text class="micro" wx:if="{{history.length}}">最近 {{history.length}} 条</text>
     </view>
-    <view class="form-group">
-      <text class="form-label">MET 值</text>
-      <input type="digit" placeholder="例如：5.5（可搜索运动MET值）" value="{{customTypeMet}}" bindinput="inputCustomTypeMet" cursor-spacing="{{120}}" />
-      <view class="form-tip">MET值越高消耗热量越多，跑步约9.8，散步约3.8</view>
+
+    <view
+      class="list-item"
+      wx:for="{{history}}"
+      wx:key="id"
+      data-id="{{item.id}}"
+      bindtap="tapHistory"
+    >
+      <view class="list-main">
+        <view class="list-title">{{item.typeName}}</view>
+        <view class="list-desc">{{item.label}} · {{item.minutes}} 分钟</view>
+      </view>
+      <view class="list-tail num">{{item.kcal === null ? '--' : item.kcal}}<text class="unit-sm">kcal</text></view>
     </view>
-    <view class="modal-actions">
-      <button class="btn btn-secondary" bindtap="closeAddTypeModal">取消</button>
-      <button class="btn btn-primary" bindtap="saveCustomType">保存</button>
-    </view>
+
+    <view class="meal-empty" wx:if="{{history.length === 0}}">还没有训练记录</view>
   </view>
 </view>

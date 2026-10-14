@@ -1,0 +1,6 @@
+{
+  "navigationBarTitleText": "营养计划",
+  "usingComponents": {
+    "segmented": "/components/segmented/index"
+  }
+}

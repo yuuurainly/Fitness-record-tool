@@ -1,0 +1,6 @@
+{
+  "navigationBarTitleText": "身体资料",
+  "usingComponents": {
+    "segmented": "/components/segmented/index"
+  }
+}

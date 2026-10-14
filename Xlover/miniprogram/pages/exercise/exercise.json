@@ -1,4 +1,6 @@
 {
-  "navigationBarTitleText": "运动记录",
-  "usingComponents": {}
+  "navigationBarTitleText": "训练",
+  "usingComponents": {
+    "segmented": "/components/segmented/index"
+  }
 }

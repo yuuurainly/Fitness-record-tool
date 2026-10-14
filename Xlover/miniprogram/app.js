@@ -1,3 +1,13 @@
+/**
+ * 本地优先版本的启动入口。
+ *
+ * 说明：旧版的情侣 / 云开发功能（任务、消息、提醒、奖励、云端食物库）
+ * 已不在主导航中，当前版本所有数据都存在本机，不需要云开发。
+ * 为避免每次冷启动都发起注定失败的云调用（控制台报错 + 无谓请求），
+ * 这里把旧版云初始化收拢到开关后面；代码本身保留，需要时打开即可。
+ */
+const ENABLE_LEGACY_CLOUD = false
+
 App({
   globalData: {
     userInfo: null,
@@ -8,8 +18,15 @@ App({
   },
 
   onLaunch() {
+    if (ENABLE_LEGACY_CLOUD) {
+      this.initLegacyCloud()
+    }
+  },
+
+  /** 旧版云开发初始化（默认不执行） */
+  initLegacyCloud() {
     if (!wx.cloud) {
-      console.error('请使用 2.2.3 或以上的基础库以使用云能力')
+      console.info('[legacy] 当前基础库不支持云能力，已跳过旧版云初始化')
       return
     }
 
@@ -31,10 +48,9 @@ App({
     }).then(res => {
       if (res.result && !res.result.error) {
         wx.setStorageSync('foodLibraryInitialized', true)
-        console.log('食物库初始化成功')
       }
     }).catch(err => {
-      console.error('食物库初始化失败', err)
+      console.info('[legacy] 云端食物库初始化未完成，本地食物库不受影响')
     })
   },
 
@@ -60,7 +76,7 @@ App({
         wx.setStorageSync('userRole', res.result.data.role)
       }
     }).catch(err => {
-      console.error('获取用户信息失败', err)
+      console.info('[legacy] 获取用户信息失败')
     })
   },
 

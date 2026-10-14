@@ -1,0 +1,105 @@
+.btn-row {
+  display: flex;
+  gap: 16rpx;
+  margin-top: 16rpx;
+}
+
+.btn-row .btn {
+  flex: 1;
+  height: 76rpx;
+  font-size: 28rpx;
+}
+
+.info-line {
+  font-size: 26rpx;
+  color: var(--text-secondary);
+  line-height: 1.7;
+  word-break: break-all;
+}
+
+.summary {
+  margin-top: 16rpx;
+  font-size: 26rpx;
+  color: var(--primary);
+  font-weight: 600;
+}
+
+.preview {
+  margin-top: 16rpx;
+  padding-top: 16rpx;
+  border-top: 1rpx solid var(--border);
+}
+
+.issue {
+  margin-top: 12rpx;
+  padding: 12rpx 16rpx;
+  border-radius: 8rpx;
+  font-size: 24rpx;
+  line-height: 1.5;
+  background: #FFF3E0;
+  color: #B26A00;
+}
+
+.issue.error {
+  background: #FDECEC;
+  color: #C0392B;
+}
+
+.backup-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 16rpx 0;
+  border-bottom: 1rpx solid var(--border);
+  font-size: 24rpx;
+  color: var(--text-secondary);
+}
+
+.backup-action {
+  color: var(--primary);
+}
+
+.result {
+  padding: 16rpx 0;
+  border-bottom: 1rpx solid var(--border);
+}
+
+.result-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.result-name {
+  font-size: 28rpx;
+  font-weight: 600;
+}
+
+.result-status {
+  font-size: 22rpx;
+  padding: 4rpx 12rpx;
+  border-radius: 6rpx;
+}
+
+.result.pass .result-status {
+  background: #E8F5E9;
+  color: #4CAF50;
+}
+
+.result.fail .result-status {
+  background: #FDECEC;
+  color: #E85D5D;
+}
+
+.result.skip .result-status {
+  background: #EEEEEE;
+  color: #999999;
+}
+
+.result-detail {
+  margin-top: 8rpx;
+  font-size: 24rpx;
+  color: var(--text-light);
+  line-height: 1.6;
+  word-break: break-all;
+}
